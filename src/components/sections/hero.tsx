@@ -74,7 +74,7 @@ export default function Hero() {
   return (
     <section className="relative h-dvh w-full overflow-hidden bg-black">
       <div className="absolute inset-x-0 top-[40%] flex -translate-y-1/2 justify-center">
-        <Logo className="w-64 sm:w-80" />
+        <Logo className="w-72 sm:w-88" />
       </div>
 
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-end gap-4 pb-14">
