@@ -77,37 +77,84 @@ export default function Hero() {
         <Logo className="w-64 sm:w-80" />
       </div>
 
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-end gap-4 pb-10">
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-end gap-4 pb-14">
         <button
           onClick={() => setOpen(true)}
-          className="rounded-lg bg-white px-5 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80 sm:px-6 sm:text-base"
+          className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80 sm:px-4 sm:text-base"
         >
           Sign Up
         </button>
 
-        <a
-          href="https://www.instagram.com/attosound_?igsh=Mm1pNmhkOTlxNHd4&utm_source=qr"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-white transition-opacity hover:opacity-70"
-          aria-label="Instagram"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="flex items-center gap-4">
+          <a
+            href="https://www.instagram.com/attosound_?igsh=Mm1pNmhkOTlxNHd4&utm_source=qr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white transition-opacity hover:opacity-70"
+            aria-label="Instagram"
           >
-            <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-          </svg>
-        </a>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+            </svg>
+          </a>
+
+          <a
+            href="https://www.tiktok.com/@attosound?_r=1&_t=ZP-94JSiDKOf6c"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white transition-opacity hover:opacity-70"
+            aria-label="TikTok"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+            </svg>
+          </a>
+
+          <a
+            href="https://www.youtube.com/@ATTOSOUND"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white transition-opacity hover:opacity-70"
+            aria-label="YouTube"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+              <path d="m10 15 5-3-5-3z" />
+            </svg>
+          </a>
+        </div>
 
         <WaitlistCounter increment={signUpCount} />
       </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const DIGIT_H = 2.5; // rem per digit cell (h-10)
+const DIGIT_H = 3.5; // rem per digit cell (h-14)
 const CYCLE = DIGIT_H * 10; // 25rem for one full 0-9 cycle
 const SPEEDS = [18, 22, 28, 20]; // rem/s rolling speed per column
 const EASE_RATE = 5; // deceleration factor
@@ -36,7 +36,7 @@ export default function WaitlistCounter({
   const displayCount = count !== null ? count + increment : null;
 
   return (
-    <div className="flex gap-[3px]">
+    <div className="flex gap-1">
       {[0, 1, 2, 3].map((i) => (
         <OdometerDigit
           key={i}
@@ -117,7 +117,7 @@ function OdometerDigit({
   }, [speed]);
 
   return (
-    <div className="relative h-10 w-7 overflow-hidden rounded-sm bg-neutral-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),inset_0_-1px_2px_rgba(255,255,255,0.05)]">
+    <div className="relative h-14 w-10 overflow-hidden rounded-md bg-neutral-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6),inset_0_-1px_2px_rgba(255,255,255,0.05)]">
       <div
         className="absolute inset-x-0 top-0"
         style={{ transform: `translateY(-${offset}rem)` }}
@@ -126,14 +126,14 @@ function OdometerDigit({
         {Array.from({ length: 11 }, (_, n) => (
           <div
             key={n}
-            className="flex h-10 items-center justify-center font-mono text-lg font-bold text-white"
+            className="flex h-14 items-center justify-center font-mono text-2xl font-bold text-white"
           >
             {n % 10}
           </div>
         ))}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-2 bg-gradient-to-b from-neutral-900/80 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2 bg-gradient-to-t from-neutral-900/80 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-3 bg-gradient-to-b from-neutral-900/80 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-gradient-to-t from-neutral-900/80 to-transparent" />
     </div>
   );
 }
