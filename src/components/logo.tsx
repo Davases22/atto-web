@@ -1,25 +1,26 @@
 import "./logo.css";
 
-// Fader positions converted from shader coordinates to SVG space.
-// xScale=0.704, yScale=0.336, scale=500, Y inverted for SVG.
+// Fader positions from atto-app Logo.tsx (9 faders, circle R=116, viewBox 230x230).
 const FADERS = [
-  { x: -77.4, top: -31.9, bot: 8.4 },
-  { x: -52.8, top: -52.9, bot: 37.8 },
-  { x: -28.2, top: -53.8, bot: 53.8 },
-  { x: 0, top: -44.5, bot: 73.1 },
-  { x: 28.2, top: -56.3, bot: 44.5 },
-  { x: 52.8, top: -56.3, bot: 37.8 },
-  { x: 77.4, top: -30.2, bot: 13.4 },
+  { x: -102.6, top: -80, bot: 20 },
+  { x: -77.4, top: -28, bot: 5 },
+  { x: -52.8, top: -62.9, bot: 30 },
+  { x: -28.2, top: -63.8, bot: 63.8 },
+  { x: 0, top: -54.5, bot: 83.1 },
+  { x: 28.2, top: -66.3, bot: 54.5 },
+  { x: 52.8, top: -66.3, bot: 30 },
+  { x: 77.4, top: -28, bot: 5 },
+  { x: 102.6, top: -80, bot: 20 },
 ];
 
-const CIRCLE_R = 96;
+const CIRCLE_R = 116;
 const CAPSULE_W = 12.8;
 const STEM_W = 1.2;
 
 export default function Logo({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="-100 -100 200 200"
+      viewBox="-115 -115 230 230"
       className={className}
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -51,7 +52,7 @@ export default function Logo({ className }: { className?: string }) {
             stroke="white"
             strokeWidth={CAPSULE_W}
             strokeLinecap="round"
-            className="logo-capsule"
+            className={i > 0 && i < FADERS.length - 1 ? "logo-capsule" : undefined}
           />
         ))}
       </g>

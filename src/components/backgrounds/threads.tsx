@@ -25,22 +25,22 @@ uniform float uPulse;
 
 #define PI 3.1415926538
 
-// === 7 faders: x-position (0-1), knob center Y (0-1), knob height (0-1) ===
-// Positions tuned to match the atto sound logo
-const int FADER_COUNT = 7;
+// === 9 faders: x-position (0-1), knob center Y (0-1), knob height (0-1) ===
+// Positions derived from atto-app Logo.tsx (9 faders, circle R=116)
+const int FADER_COUNT = 9;
 
 vec3 getFader(int i) {
     // Returns vec3(xPos, knobCenterY, knobHalfHeight)
-    // Measured from original logo — heart-shaped silhouette
-    // Tops:  0.72  0.77  0.74  0.70  0.77  0.79  0.73
-    // Bots:  0.42  0.32  0.23  0.13  0.28  0.40  0.37
-    if (i == 0) return vec3(0.28, 0.57,  0.12);
-    if (i == 1) return vec3(0.35, 0.545, 0.27);
-    if (i == 2) return vec3(0.42, 0.50,  0.32);
-    if (i == 3) return vec3(0.50, 0.415, 0.35);
-    if (i == 4) return vec3(0.58, 0.535, 0.30);
-    if (i == 5) return vec3(0.65, 0.555, 0.28);
-    return         vec3(0.72, 0.55,  0.13);
+    // Faders 0 and 8 are extreme (static, no pulse)
+    if (i == 0) return vec3(0.259, 0.648, 0.246);
+    if (i == 1) return vec3(0.318, 0.557, 0.081);
+    if (i == 2) return vec3(0.376, 0.581, 0.229);
+    if (i == 3) return vec3(0.434, 0.500, 0.314);
+    if (i == 4) return vec3(0.500, 0.430, 0.339);
+    if (i == 5) return vec3(0.566, 0.529, 0.298);
+    if (i == 6) return vec3(0.624, 0.589, 0.237);
+    if (i == 7) return vec3(0.682, 0.557, 0.081);
+    return         vec3(0.741, 0.648, 0.246);
 }
 
 float pixel(float count, vec2 resolution) {
@@ -55,7 +55,7 @@ float sdCapsule(vec2 p, vec2 a, vec2 b, float r) {
     return length(pa - ba * h) - r;
 }
 
-// Draw all 7 faders as SDF shapes with heartbeat pulse, clipped to a circle
+// Draw all 9 faders as SDF shapes with heartbeat pulse, clipped to a circle
 float drawFaders(vec2 uv, float pulse, float time) {
     float aspect = iResolution.x / iResolution.y;
     vec2 p = vec2((uv.x - 0.5) * aspect, uv.y - 0.60);
@@ -77,7 +77,8 @@ float drawFaders(vec2 uv, float pulse, float time) {
         vec3 fader = getFader(i);
         float fx = (fader.x - 0.5) * xScale;
         float fy = (fader.y - 0.5) * yScale;
-        float kh = fader.z * yScale * pulseScale;
+        float thisPulse = (i > 0 && i < FADER_COUNT - 1) ? pulseScale : 1.0;
+        float kh = fader.z * yScale * thisPulse;
 
         // Thin stem
         float stemWidth = 0.0015 * logoScale;
@@ -87,7 +88,7 @@ float drawFaders(vec2 uv, float pulse, float time) {
         // Capsule knob
         vec2 knobTop = vec2(fx, fy + kh);
         vec2 knobBot = vec2(fx, fy - kh);
-        float knobRadius = 0.016 * logoScale * pulseScale;
+        float knobRadius = 0.016 * logoScale * thisPulse;
         float knobDist = sdCapsule(p, knobBot, knobTop, knobRadius);
         float knobAlpha = smoothstep(px, -px, knobDist);
 
