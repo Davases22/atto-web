@@ -4,6 +4,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Privacy Policy | ATTO SOUND",
   description: "ATTO SOUND Privacy Policy.",
+  alternates: { canonical: "/privacy" },
+  openGraph: {
+    title: "Privacy Policy | ATTO SOUND",
+    description: "ATTO SOUND Privacy Policy.",
+    url: "/privacy",
+  },
 };
 
 export default function PrivacyPage() {
@@ -97,19 +103,37 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2>3. SMS and Messaging</h2>
+            <h2>3. SMS Communications</h2>
+
             <p>
-              By providing your phone number and signing up for our waitlist, you
-              consent to receive text messages from ATTO SOUND. These messages
-              may include waitlist updates, launch notifications, and
-              promotional content related to our platform.
+              <strong className="text-white">
+                3a. Verification &amp; Authentication Messages (OTP)
+              </strong>
+            </p>
+            <p>
+              When you create an account or log in to the ATTO SOUND platform,
+              we will send one-time passcodes (OTP) via SMS for identity
+              verification. These are transactional messages sent only upon your
+              explicit request. You cannot opt out of OTP messages while using
+              account authentication features.
+            </p>
+
+            <p>
+              <strong className="text-white">
+                3b. Waitlist &amp; Marketing Messages
+              </strong>
+            </p>
+            <p>
+              By providing your phone number on our waitlist form, you consent
+              to receive text messages about waitlist status, product launches,
+              and platform announcements.
             </p>
             <ul className="list-inside list-disc space-y-1 pl-2">
               <li>Message frequency may vary</li>
               <li>Message and data rates may apply</li>
               <li>
-                Reply <strong className="text-white">STOP</strong> to any
-                message to opt out at any time
+                Reply <strong className="text-white">STOP</strong> to opt out
+                at any time
               </li>
               <li>
                 Reply <strong className="text-white">HELP</strong> for
@@ -119,7 +143,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-3">
               We will not share your phone number or SMS opt-in data with third
-              parties for their marketing purposes.
+              parties for their own marketing purposes.
             </p>
           </section>
 

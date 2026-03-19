@@ -4,6 +4,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Terms of Service | ATTO SOUND",
   description: "ATTO SOUND Beta Terms of Service.",
+  alternates: { canonical: "/terms" },
+  openGraph: {
+    title: "Terms of Service | ATTO SOUND",
+    description: "ATTO SOUND Beta Terms of Service.",
+    url: "/terms",
+  },
 };
 
 export default function TermsPage() {

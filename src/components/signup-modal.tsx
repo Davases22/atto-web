@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -271,6 +272,27 @@ export default function SignUpModal({
               </button>
             </div>
           </div>
+
+          <p className="text-xs leading-relaxed text-neutral-500">
+            By submitting, you consent to receive text messages from ATTO
+            SOUND, including waitlist updates and verification codes. Message
+            and data rates may apply. Reply STOP to opt out. Consent is not a
+            condition of any purchase. See our{" "}
+            <Link
+              href="/privacy"
+              className="text-neutral-400 underline underline-offset-2 hover:text-white"
+            >
+              Privacy Policy
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/terms"
+              className="text-neutral-400 underline underline-offset-2 hover:text-white"
+            >
+              Terms of Service
+            </Link>
+            .
+          </p>
 
           <Button
             type="submit"
