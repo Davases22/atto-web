@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Footer from "@/components/footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +13,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const title = "ATTO SOUND";
+const description =
+  "ATTO SOUND is a record label, content platform, and social network that discovers, showcases, and monetizes the creativity of incarcerated talent, giving them a way out while connecting them with the world.";
+
 export const metadata: Metadata = {
-  title: "ATTO SOUND",
-  description:
-    "ATTO SOUND is a record label, content platform, and social network that discovers, showcases, and monetizes the creativity of incarcerated talent, giving them a way out while connecting them with the world.",
+  metadataBase: new URL("https://www.attosound.com"),
+  title,
+  description,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title,
+    description,
+    url: "/",
+    siteName: "ATTO SOUND",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({
@@ -29,6 +47,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <Footer />
       </body>
     </html>
   );
