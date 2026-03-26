@@ -2,15 +2,15 @@ import "./logo.css";
 
 // Fader positions from atto-app Logo.tsx (9 faders, circle R=116, viewBox 230x230).
 const FADERS = [
-  { x: -112.9, top: -80, bot: 20 },
-  { x: -85.1, top: -28, bot: 5 },
-  { x: -58.1, top: -62.9, bot: 30 },
-  { x: -31, top: -66.8, bot: 60.8 },
-  { x: 0, top: -47, bot: 90 },
-  { x: 31, top: -69.3, bot: 51.5 },
-  { x: 58.1, top: -66.3, bot: 30 },
-  { x: 85.1, top: -28, bot: 5 },
-  { x: 112.9, top: -80, bot: 20 },
+  { x: -112.9, top: -78.5, bot: 18.5 },
+  { x: -85.1, top: -26.5, bot: 3.5 },
+  { x: -58.1, top: -61.4, bot: 28.5 },
+  { x: -31, top: -65.3, bot: 59.3 },
+  { x: 0, top: -45.5, bot: 88.5 },
+  { x: 31, top: -67.8, bot: 50 },
+  { x: 58.1, top: -64.8, bot: 28.5 },
+  { x: 85.1, top: -26.5, bot: 3.5 },
+  { x: 112.9, top: -78.5, bot: 18.5 },
 ];
 
 const CIRCLE_R = 126;
