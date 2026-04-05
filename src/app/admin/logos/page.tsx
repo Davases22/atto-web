@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { Upload, Trash2, GripVertical, Loader2 } from "lucide-react";
+import { Upload, Trash2, Loader2 } from "lucide-react";
 
 interface Logo {
   id: string;
@@ -77,109 +77,106 @@ export default function AdminLogosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-dvh bg-black text-white">
       {/* Header */}
-      <div className="border-b border-neutral-800 px-6 py-6">
-        <div className="mx-auto max-w-3xl">
-          <h1 className="text-2xl font-bold tracking-tight">
+      <header className="border-b border-neutral-800 px-4 py-5 sm:px-6">
+        <div className="mx-auto max-w-2xl">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
             ATTO SOUND
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
             Creator Logo Management
           </p>
         </div>
-      </div>
+      </header>
 
       {/* Content */}
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
         {/* Upload */}
-        <div className="mb-10">
-          <label
-            className={`flex cursor-pointer items-center justify-center gap-3 rounded-xl border-2 border-dashed border-neutral-700 px-6 py-10 transition-colors hover:border-white ${
-              uploading ? "pointer-events-none opacity-50" : ""
-            }`}
-          >
-            {uploading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
-            ) : (
-              <Upload className="h-6 w-6 text-neutral-400" />
-            )}
-            <span className="text-sm text-neutral-400">
-              {uploading
-                ? "Uploading..."
-                : "Click to upload a new creator logo"}
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleUpload}
-              disabled={uploading}
-            />
-          </label>
-          <p className="mt-2 text-center text-xs text-neutral-600">
-            PNG or JPG recommended. Will appear in the Creator Focus feed header.
-          </p>
-        </div>
+        <label
+          className={`mb-8 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-700 px-4 py-8 text-center transition-colors hover:border-white sm:flex-row sm:gap-3 sm:px-6 sm:py-10 ${
+            uploading ? "pointer-events-none opacity-50" : ""
+          }`}
+        >
+          {uploading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+          ) : (
+            <Upload className="h-5 w-5 text-neutral-400" />
+          )}
+          <span className="text-sm text-neutral-400">
+            {uploading ? "Uploading..." : "Tap to upload a new creator logo"}
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleUpload}
+            disabled={uploading}
+          />
+        </label>
 
-        {/* Logo Grid */}
+        {/* Logo list */}
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-neutral-600" />
           </div>
         ) : logos.length === 0 ? (
-          <p className="py-20 text-center text-neutral-600">
+          <p className="py-20 text-center text-sm text-neutral-600">
             No logos yet. Upload one above.
           </p>
         ) : (
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-500">
+          <div className="space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
               Active Logos ({logos.length})
             </h2>
-            <div className="grid gap-4">
-              {logos.map((logo) => (
-                <div
-                  key={logo.id}
-                  className="flex items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-950 p-4"
-                >
-                  <GripVertical className="h-5 w-5 shrink-0 text-neutral-700" />
 
-                  <div className="relative h-16 w-32 shrink-0 overflow-hidden rounded-lg bg-neutral-900">
-                    <Image
-                      src={logo.image_url}
-                      alt="Creator logo"
-                      fill
-                      className="object-contain"
-                      unoptimized
-                    />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs text-neutral-500">
-                      {logo.image_url.split("/").pop()}
-                    </p>
-                    <p className="text-xs text-neutral-700">
-                      Order: {logo.sort_order} · {logo.active ? "Active" : "Inactive"}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleDelete(logo.id)}
-                    disabled={deleting === logo.id}
-                    className="shrink-0 rounded-lg p-2 text-neutral-600 transition-colors hover:bg-red-950 hover:text-red-400 disabled:opacity-50"
-                  >
-                    {deleting === logo.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </button>
+            {logos.map((logo) => (
+              <div
+                key={logo.id}
+                className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-950 p-3 sm:gap-4 sm:p-4"
+              >
+                {/* Thumbnail */}
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-neutral-900 sm:h-14 sm:w-24">
+                  <Image
+                    src={logo.image_url}
+                    alt="Creator logo"
+                    fill
+                    className="object-contain p-1"
+                    unoptimized
+                  />
                 </div>
-              ))}
-            </div>
+
+                {/* Info */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs text-neutral-400 sm:text-sm">
+                    {decodeURIComponent(
+                      logo.image_url.split("/").pop() || ""
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-neutral-600 sm:text-xs">
+                    #{logo.sort_order + 1} ·{" "}
+                    {logo.active ? "Active" : "Inactive"}
+                  </p>
+                </div>
+
+                {/* Delete */}
+                <button
+                  onClick={() => handleDelete(logo.id)}
+                  disabled={deleting === logo.id}
+                  className="shrink-0 rounded-lg p-2.5 text-neutral-600 transition-colors active:bg-red-950 active:text-red-400 sm:hover:bg-red-950 sm:hover:text-red-400 disabled:opacity-50"
+                  aria-label="Delete logo"
+                >
+                  {deleting === logo.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
