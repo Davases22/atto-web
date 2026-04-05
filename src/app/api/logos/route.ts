@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
+import { createClient } from "redis";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 3,
 });
+
+const REDIS_URL = process.env.REDIS_URL || "";
+
+async function clearLogosCache() {
+  if (!REDIS_URL) return;
+  try {
+    const redis = createClient({ url: REDIS_URL });
+    await redis.connect();
+    await redis.del("social:creator-logos");
+    await redis.disconnect();
+  } catch {
+    // non-critical
+  }
+}
 
 const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME || "dxzcutnlp";
 const CLOUDINARY_KEY = process.env.CLOUDINARY_API_KEY || "";
@@ -81,6 +96,7 @@ export async function POST(req: NextRequest) {
       [imageUrl, sortOrder]
     );
 
+    await clearLogosCache();
     return NextResponse.json({ logo: rows[0] }, { status: 201 });
   } catch (err) {
     console.error("Logo upload error:", err);
@@ -101,6 +117,7 @@ export async function DELETE(req: NextRequest) {
 
   try {
     await pool.query("DELETE FROM creator_logos WHERE id = $1", [id]);
+    await clearLogosCache();
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
