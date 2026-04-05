@@ -15,7 +15,7 @@ const FADERS = [
 
 const CIRCLE_R = 126;
 const CAPSULE_W = 15.5;
-const STEM_W = 1.8;
+const STEM_W = 3.5;
 
 export default function Logo({ className }: { className?: string }) {
   return (
@@ -37,9 +37,9 @@ export default function Logo({ className }: { className?: string }) {
             y1={-CIRCLE_R}
             x2={f.x}
             y2={CIRCLE_R}
-            stroke="white"
+            stroke="#F5F0E8"
             strokeWidth={STEM_W}
-            opacity={0.55}
+            opacity={1}
           />
         ))}
         {FADERS.map((f, i) => (
@@ -49,7 +49,7 @@ export default function Logo({ className }: { className?: string }) {
             y1={f.top}
             x2={f.x}
             y2={f.bot}
-            stroke="white"
+            stroke="#F5F0E8"
             strokeWidth={CAPSULE_W}
             strokeLinecap="round"
             className={i > 0 && i < FADERS.length - 1 ? "logo-capsule" : undefined}
