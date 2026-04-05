@@ -34,6 +34,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Convert file to base64 data URI for Cloudinary
+    const bytes = await file.arrayBuffer();
+    const base64 = Buffer.from(bytes).toString("base64");
+    const dataUri = `data:${file.type};base64,${base64}`;
+
     // Upload to Cloudinary (signed)
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const folder = "atto/creator-logos";
@@ -42,7 +47,7 @@ export async function POST(req: NextRequest) {
     const signature = crypto.createHash("sha1").update(sigString).digest("hex");
 
     const cloudinaryForm = new FormData();
-    cloudinaryForm.append("file", file);
+    cloudinaryForm.append("file", dataUri);
     cloudinaryForm.append("folder", folder);
     cloudinaryForm.append("timestamp", timestamp);
     cloudinaryForm.append("api_key", CLOUDINARY_KEY);
