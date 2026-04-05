@@ -34,20 +34,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary (signed)
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const folder = "atto/creator-logos";
+    const crypto = await import("crypto");
+    const sigString = `folder=${folder}&timestamp=${timestamp}${CLOUDINARY_SECRET}`;
+    const signature = crypto.createHash("sha1").update(sigString).digest("hex");
+
     const cloudinaryForm = new FormData();
     cloudinaryForm.append("file", file);
-    cloudinaryForm.append("upload_preset", "ml_default");
-    cloudinaryForm.append("folder", "atto/creator-logos");
-
-    // Use signed upload
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const crypto = await import("crypto");
-    const signature = crypto
-      .createHash("sha1")
-      .update(`folder=atto/creator-logos&timestamp=${timestamp}${CLOUDINARY_SECRET}`)
-      .digest("hex");
-
+    cloudinaryForm.append("folder", folder);
     cloudinaryForm.append("timestamp", timestamp);
     cloudinaryForm.append("api_key", CLOUDINARY_KEY);
     cloudinaryForm.append("signature", signature);
