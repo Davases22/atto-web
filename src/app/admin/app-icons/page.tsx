@@ -14,7 +14,7 @@ interface AppIcon {
   createdAt: string;
 }
 
-const KNOWN_SLOTS = ["metal"] as const;
+const KNOWN_SLOTS = ["metal", "aurora"] as const;
 
 export default function AdminAppIconsPage() {
   const [icons, setIcons] = useState<AppIcon[]>([]);
@@ -137,7 +137,8 @@ export default function AdminAppIconsPage() {
               build. Adding a NEW icon requires editing{" "}
               <code className="rounded bg-amber-900/40 px-1">app.json</code> in
               the mobile repo and cutting a new EAS build. Current shipped
-              slot: <code className="rounded bg-amber-900/40 px-1">metal</code>.
+              slots: <code className="rounded bg-amber-900/40 px-1">metal</code>,{" "}
+              <code className="rounded bg-amber-900/40 px-1">aurora</code>.
             </p>
           </div>
         </div>
