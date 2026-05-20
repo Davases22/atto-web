@@ -14,7 +14,7 @@ interface AppIcon {
   createdAt: string;
 }
 
-const KNOWN_SLOTS = ["noir", "blueprint", "mono"] as const;
+const KNOWN_SLOTS = ["metal"] as const;
 
 export default function AdminAppIconsPage() {
   const [icons, setIcons] = useState<AppIcon[]>([]);
@@ -137,9 +137,7 @@ export default function AdminAppIconsPage() {
               build. Adding a NEW icon requires editing{" "}
               <code className="rounded bg-amber-900/40 px-1">app.json</code> in
               the mobile repo and cutting a new EAS build. Current shipped
-              slots: <code className="rounded bg-amber-900/40 px-1">noir</code>,{" "}
-              <code className="rounded bg-amber-900/40 px-1">blueprint</code>,{" "}
-              <code className="rounded bg-amber-900/40 px-1">mono</code>.
+              slot: <code className="rounded bg-amber-900/40 px-1">metal</code>.
             </p>
           </div>
         </div>
@@ -156,7 +154,7 @@ export default function AdminAppIconsPage() {
                 list="known-slots"
                 value={slotName}
                 onChange={(e) => setSlotName(e.target.value)}
-                placeholder="e.g. noir"
+                placeholder="e.g. metal"
                 className="rounded-lg border border-neutral-800 bg-black px-3 py-2 text-white outline-none focus:border-neutral-600"
                 disabled={uploading}
               />
@@ -173,7 +171,7 @@ export default function AdminAppIconsPage() {
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="e.g. Noir"
+                placeholder="e.g. Metal"
                 className="rounded-lg border border-neutral-800 bg-black px-3 py-2 text-white outline-none focus:border-neutral-600"
                 disabled={uploading}
               />
