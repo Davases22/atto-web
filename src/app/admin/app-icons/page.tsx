@@ -14,7 +14,7 @@ interface AppIcon {
   createdAt: string;
 }
 
-const KNOWN_SLOTS = ["metal", "aurora", "studio"] as const;
+const KNOWN_SLOTS = ["metal", "aurora", "studio", "chrome"] as const;
 
 export default function AdminAppIconsPage() {
   const [icons, setIcons] = useState<AppIcon[]>([]);
@@ -139,7 +139,8 @@ export default function AdminAppIconsPage() {
               the mobile repo and cutting a new EAS build. Current shipped
               slots: <code className="rounded bg-amber-900/40 px-1">metal</code>,{" "}
               <code className="rounded bg-amber-900/40 px-1">aurora</code>,{" "}
-              <code className="rounded bg-amber-900/40 px-1">studio</code>.
+              <code className="rounded bg-amber-900/40 px-1">studio</code>,{" "}
+              <code className="rounded bg-amber-900/40 px-1">chrome</code>.
             </p>
           </div>
         </div>
