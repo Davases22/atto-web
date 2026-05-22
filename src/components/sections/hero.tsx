@@ -1,7 +1,7 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import Logo from "@/components/logo";
 import SignUpModal from "@/components/signup-modal";
 import WaitlistCounter from "@/components/waitlist-counter";
 
@@ -72,9 +72,37 @@ export default function Hero() {
   useHeartbeatSound();
 
   return (
-    <section className="relative h-dvh w-full overflow-hidden bg-black">
+    <section className="relative h-dvh w-full overflow-hidden bg-[#100e10]">
+      {/* White key light beaming down from the top — like a spotlight aimed at the logo */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          background:
+            "radial-gradient(90% 70% at 50% -10%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.06) 35%, transparent 60%)",
+        }}
+      />
+      {/* Subtle vignette so the edges fall off into shadow, giving the matte surface depth */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          background:
+            "radial-gradient(120% 120% at 50% 42%, transparent 60%, rgba(0, 0, 0, 0.4) 100%)",
+        }}
+      />
+
       <div className="absolute inset-x-0 top-[40%] flex -translate-y-1/2 justify-center">
-        <Logo className="w-72 sm:w-88" />
+        {/* 3D render of the equalizer badge. To restore the animated SVG, re-import
+            Logo from "@/components/logo" and replace <Image> with <Logo className="w-72 sm:w-88" />. */}
+        <Image
+          src="/logo-3d.png"
+          alt="ATTO Sound"
+          width={600}
+          height={600}
+          priority
+          className="w-88 sm:w-[28rem]"
+        />
       </div>
 
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-end gap-4 pb-14">
