@@ -45,12 +45,37 @@ export default function AdminAdsPage() {
 
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("brandName", brandName.trim());
-      formData.append("caption", caption.trim());
+      // 1. Get a signed payload from our API (no file passes through Vercel).
+      const signRes = await fetch("/api/ads/sign");
+      if (!signRes.ok) throw new Error("sign");
+      const { cloudName, apiKey, timestamp, folder, signature } =
+        await signRes.json();
 
-      const res = await fetch("/api/ads", { method: "POST", body: formData });
+      // 2. Upload the video straight to Cloudinary — bypasses the 4.5 MB limit.
+      const cloudForm = new FormData();
+      cloudForm.append("file", file);
+      cloudForm.append("api_key", apiKey);
+      cloudForm.append("timestamp", timestamp);
+      cloudForm.append("folder", folder);
+      cloudForm.append("signature", signature);
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
+        { method: "POST", body: cloudForm }
+      );
+      if (!uploadRes.ok) throw new Error("cloudinary");
+      const { secure_url: videoUrl } = await uploadRes.json();
+
+      // 3. Save just the resulting URL + metadata to our DB.
+      const res = await fetch("/api/ads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoUrl,
+          brandName: brandName.trim(),
+          caption: caption.trim(),
+        }),
+      });
       if (res.ok) {
         await fetchAds();
         setBrandName("");
