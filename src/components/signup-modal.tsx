@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  TRANSACTIONAL_SMS_DISCLOSURE,
+  MARKETING_SMS_DISCLOSURE,
+} from "@/lib/sms-compliance";
 
 const COUNTRY_CODES = [
   { code: "+1", label: "US +1" },
@@ -50,6 +55,17 @@ const COUNTRY_CODES = [
 
 type Status = "idle" | "loading" | "success" | "error" | "duplicate";
 
+const initialState = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  countryCode: "+1",
+  phone: "",
+  os: "ios" as "ios" | "android",
+  consentTransactionalSms: false,
+  consentMarketingSms: false,
+};
+
 export default function SignUpModal({
   open,
   onOpenChange,
@@ -59,66 +75,78 @@ export default function SignUpModal({
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [countryCode, setCountryCode] = useState("+1");
-  const [phone, setPhone] = useState("");
-  const [os, setOs] = useState<"ios" | "android">("ios");
+  const [firstName, setFirstName] = useState(initialState.firstName);
+  const [lastName, setLastName] = useState(initialState.lastName);
+  const [email, setEmail] = useState(initialState.email);
+  const [countryCode, setCountryCode] = useState(initialState.countryCode);
+  const [phone, setPhone] = useState(initialState.phone);
+  const [os, setOs] = useState<"ios" | "android">(initialState.os);
+  const [consentTransactionalSms, setConsentTransactionalSms] = useState(
+    initialState.consentTransactionalSms
+  );
+  const [consentMarketingSms, setConsentMarketingSms] = useState(
+    initialState.consentMarketingSms
+  );
   const [status, setStatus] = useState<Status>("idle");
+  const [showConsentError, setShowConsentError] = useState(false);
 
   function reset() {
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setCountryCode("+1");
-    setPhone("");
-    setOs("ios");
+    setFirstName(initialState.firstName);
+    setLastName(initialState.lastName);
+    setEmail(initialState.email);
+    setCountryCode(initialState.countryCode);
+    setPhone(initialState.phone);
+    setOs(initialState.os);
+    setConsentTransactionalSms(initialState.consentTransactionalSms);
+    setConsentMarketingSms(initialState.consentMarketingSms);
+    setShowConsentError(false);
     setStatus("idle");
   }
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isValidPhone = /^\d{6,15}$/.test(phone.replaceAll(" ", ""));
+  const phoneObj = parsePhoneNumberFromString(`${countryCode}${phone}`);
+  const isValidPhone = !!phoneObj?.isValid();
   const isFormValid =
     firstName.trim() !== "" &&
     lastName.trim() !== "" &&
     isValidEmail &&
-    isValidPhone;
+    isValidPhone &&
+    consentTransactionalSms;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!isFormValid) return;
-    setStatus("loading");
-
-    const url = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
-    if (!url) {
-      setStatus("error");
+    if (!consentTransactionalSms) {
+      setShowConsentError(true);
       return;
     }
+    if (!isFormValid) return;
+    setStatus("loading");
+    setShowConsentError(false);
 
     try {
-      // Check for duplicate email via GET (readable response, no CORS issue)
-      const check = await fetch(
-        `${url}?email=${encodeURIComponent(email)}`
-      );
-      const checkData = await check.json();
-      if (checkData.exists) {
-        setStatus("duplicate");
-        return;
-      }
-
-      await fetch(url, {
+      const res = await fetch("/api/waitlist", {
         method: "POST",
-        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName,
           lastName,
           email,
-          phone: `${countryCode}${phone}`,
-          os,
+          phone: phoneObj?.number ?? `${countryCode}${phone}`,
+          platformPreference: os,
+          consentTransactionalSms,
+          consentMarketingSms,
         }),
       });
+
+      if (res.status === 409) {
+        setStatus("duplicate");
+        return;
+      }
+      if (!res.ok) {
+        setStatus("error");
+        return;
+      }
+
       setStatus("success");
       onSuccess?.();
     } catch {
@@ -158,7 +186,7 @@ export default function SignUpModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="border-neutral-800 bg-neutral-950 text-white sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-neutral-800 bg-neutral-950 text-white sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-white">Sign Up</DialogTitle>
           <DialogDescription className="text-neutral-400">
@@ -273,26 +301,71 @@ export default function SignUpModal({
             </div>
           </div>
 
-          <p className="text-xs leading-relaxed text-neutral-500">
-            By submitting, you consent to receive text messages from ATTO
-            SOUND, including waitlist updates and verification codes. Message
-            and data rates may apply. Reply STOP to opt out. Consent is not a
-            condition of any purchase. See our{" "}
-            <Link
-              href="/privacy"
-              className="text-neutral-400 underline underline-offset-2 hover:text-white"
+          <div className="grid gap-3 rounded-md border border-neutral-800 bg-neutral-950 p-3">
+            <ConsentCheckbox
+              id="consent-transactional"
+              checked={consentTransactionalSms}
+              onChange={(v) => {
+                setConsentTransactionalSms(v);
+                if (v) setShowConsentError(false);
+              }}
+              required
+              ariaInvalid={showConsentError && !consentTransactionalSms}
             >
-              Privacy Policy
-            </Link>{" "}
-            and{" "}
-            <Link
-              href="/terms"
-              className="text-neutral-400 underline underline-offset-2 hover:text-white"
+              {TRANSACTIONAL_SMS_DISCLOSURE.replace(
+                "Privacy Policy and Terms of Service.",
+                ""
+              )}
+              <Link
+                href="/privacy"
+                className="text-white underline underline-offset-2 hover:text-neutral-300"
+              >
+                Privacy Policy
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/terms"
+                className="text-white underline underline-offset-2 hover:text-neutral-300"
+              >
+                Terms of Service
+              </Link>
+              .
+            </ConsentCheckbox>
+            {showConsentError && !consentTransactionalSms && (
+              <p
+                id="consent-transactional-error"
+                className="text-sm text-red-400"
+              >
+                You must agree to receive verification codes to join the
+                waitlist.
+              </p>
+            )}
+
+            <ConsentCheckbox
+              id="consent-marketing"
+              checked={consentMarketingSms}
+              onChange={setConsentMarketingSms}
             >
-              Terms of Service
-            </Link>
-            .
-          </p>
+              {MARKETING_SMS_DISCLOSURE.replace(
+                "Privacy Policy and Terms of Service.",
+                ""
+              )}
+              <Link
+                href="/privacy"
+                className="text-white underline underline-offset-2 hover:text-neutral-300"
+              >
+                Privacy Policy
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/terms"
+                className="text-white underline underline-offset-2 hover:text-neutral-300"
+              >
+                Terms of Service
+              </Link>
+              .
+            </ConsentCheckbox>
+          </div>
 
           <Button
             type="submit"
@@ -315,5 +388,55 @@ export default function SignUpModal({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ConsentCheckbox({
+  id,
+  checked,
+  onChange,
+  required,
+  ariaInvalid,
+  children,
+}: {
+  id: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  required?: boolean;
+  ariaInvalid?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-start gap-3 text-neutral-200"
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        aria-invalid={ariaInvalid || undefined}
+        aria-describedby={
+          ariaInvalid ? `${id}-error` : undefined
+        }
+        className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded border border-neutral-600 bg-neutral-900 accent-white checked:border-white checked:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white aria-invalid:border-red-500"
+        style={{
+          backgroundImage: checked
+            ? "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='black'><path d='M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z'/></svg>\")"
+            : undefined,
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      <span className="text-sm leading-snug text-neutral-200">
+        {children}
+        {required && (
+          <span className="ml-1 text-red-400" aria-hidden="true">
+            *
+          </span>
+        )}
+      </span>
+    </label>
   );
 }
