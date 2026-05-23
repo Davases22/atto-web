@@ -10,6 +10,28 @@ import {
   X,
   Check,
 } from "lucide-react";
+import {
+  getCountries,
+  getCountryCallingCode,
+  parsePhoneNumberFromString,
+  type CountryCode,
+} from "libphonenumber-js";
+
+// Pre-compute the country list once. libphonenumber-js bundles ~250 countries;
+// we sort by dial code so common ones (US/CA = 1) stay near the top of the
+// dropdown for users picking from a long alphabetical list.
+const COUNTRY_OPTIONS = getCountries()
+  .map((c) => ({ code: c as CountryCode, dial: getCountryCallingCode(c) }))
+  .sort((a, b) =>
+    a.dial === b.dial ? a.code.localeCompare(b.code) : Number(a.dial) - Number(b.dial)
+  );
+
+/** Render the ISO country code as its flag emoji via regional-indicator code points. */
+function flagEmoji(code: string): string {
+  return code
+    .toUpperCase()
+    .replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
+}
 
 interface Signup {
   id: string;
@@ -306,7 +328,26 @@ function SignupFormModal({
   const [firstName, setFirstName] = useState(signup?.first_name ?? "");
   const [lastName, setLastName] = useState(signup?.last_name ?? "");
   const [email, setEmail] = useState(signup?.email ?? "");
-  const [phone, setPhone] = useState(signup?.phone_number ?? "");
+  // Phone is split into a country selector and a local-digits field so the
+  // admin can't accidentally save a number without an international prefix.
+  // For existing signups we try to parse the stored E.164 to pre-fill both
+  // fields; legacy rows that stored bare 10-digit US numbers are assumed US.
+  const initial = useMemo(() => {
+    const raw = signup?.phone_number ?? "";
+    if (!raw) return { country: "US" as CountryCode, local: "" };
+    const parsed = parsePhoneNumberFromString(raw.startsWith("+") ? raw : `+${raw}`);
+    if (parsed?.country) {
+      return { country: parsed.country, local: parsed.nationalNumber };
+    }
+    // Fall back: assume US and treat the trailing 10 digits as the national part.
+    const digits = raw.replace(/\D/g, "");
+    return {
+      country: "US" as CountryCode,
+      local: digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits,
+    };
+  }, [signup]);
+  const [country, setCountry] = useState<CountryCode>(initial.country);
+  const [localPhone, setLocalPhone] = useState(initial.local);
   const [platform, setPlatform] = useState<"" | "ios" | "android">(
     signup?.platform_preference ?? ""
   );
@@ -324,11 +365,16 @@ function SignupFormModal({
     setSaving(true);
     setError(null);
     try {
+      // Build E.164 from the country code + local digits. An empty local
+      // means "no phone" — we send null so the column stays clean rather
+      // than storing a bare dial code with no number behind it.
+      const digits = localPhone.replace(/\D/g, "");
+      const phone = digits ? `+${getCountryCallingCode(country)}${digits}` : null;
       const body = {
         firstName,
         lastName,
         email,
-        phone: phone || null,
+        phone,
         platform: platform || null,
       };
       const res = await fetch(
@@ -381,13 +427,38 @@ function SignupFormModal({
             <Field label="Last name" value={lastName} onChange={setLastName} />
           </div>
           <Field label="Email" type="email" value={email} onChange={setEmail} />
-          <Field
-            label="Phone"
-            type="tel"
-            value={phone}
-            onChange={setPhone}
-            placeholder="+1 555 123 4567"
-          />
+          <div>
+            <label className="mb-1 block text-xs uppercase tracking-wider text-neutral-500">
+              Phone
+            </label>
+            <div className="flex gap-2">
+              <div className="relative">
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value as CountryCode)}
+                  className="h-full appearance-none rounded-xl border border-neutral-700 bg-neutral-950 py-2 pl-3 pr-7 text-sm text-white focus:border-white focus:outline-none"
+                  aria-label="Country code"
+                >
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {flagEmoji(c.code)} {c.code} +{c.dial}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <input
+                type="tel"
+                value={localPhone}
+                onChange={(e) => setLocalPhone(e.target.value)}
+                placeholder="555 123 4567"
+                className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white placeholder-neutral-700 focus:border-white focus:outline-none"
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-neutral-600">
+              Saved as +{getCountryCallingCode(country)}
+              {localPhone.replace(/\D/g, "") || "…"}
+            </p>
+          </div>
           <div>
             <label className="mb-1 block text-xs uppercase tracking-wider text-neutral-500">
               Platform
