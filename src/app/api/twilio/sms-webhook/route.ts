@@ -15,8 +15,11 @@ import {
   hashDisclosure,
 } from "@/lib/sms-compliance";
 
+// Consent ledger lives in the web-owned Postgres (WEB_DATABASE_URL),
+// isolated from the social-service DB. DATABASE_URL is kept as a fallback
+// for local/preview envs where the dedicated URL isn't set.
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.WEB_DATABASE_URL || process.env.DATABASE_URL,
   max: 3,
 });
 

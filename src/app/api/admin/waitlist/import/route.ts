@@ -24,7 +24,7 @@ import { Pool } from "pg";
  *   On conflict we DO NOTHING (existing rows win); the response counts both.
  */
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.WEB_DATABASE_URL || process.env.DATABASE_URL,
   max: 3,
 });
 
