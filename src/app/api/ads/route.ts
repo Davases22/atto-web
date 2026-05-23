@@ -21,11 +21,14 @@ async function clearAdsCache() {
   }
 }
 
-// GET — list all ads
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// GET — list all ads (ordered as they'll appear in the mobile feed)
 export async function GET() {
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM feed_ads ORDER BY sort_order ASC"
+      "SELECT id, video_url, brand_name, brand_avatar, caption, link_url, sort_order, active, created_at FROM feed_ads ORDER BY sort_order ASC"
     );
     return NextResponse.json({ ads: rows });
   } catch {
@@ -36,13 +39,40 @@ export async function GET() {
 // POST — store an ad after the browser uploaded the video directly to
 // Cloudinary. Only lightweight JSON metadata passes through this function,
 // so there is no 4.5 MB body limit to hit.
+//
+// All four fields are required: videoUrl, brandName, caption, brandAvatar.
+// The admin UI also disables the publish button until they're all set, but
+// we enforce server-side so direct API callers can't bypass the rule.
+//
+// `brandAvatar` is the Cloudinary public_id (e.g. "atto/ad-avatars/apple"),
+// NOT a full URL — the mobile app concatenates it inside a transformation
+// template (c_lpad,w_200,h_200,…) in src/features/feed/hooks/useAds.ts.
 export async function POST(req: NextRequest) {
   try {
-    const { videoUrl, brandName, caption = "" } = await req.json();
+    const body = (await req.json()) as {
+      videoUrl?: unknown;
+      brandName?: unknown;
+      caption?: unknown;
+      brandAvatar?: unknown;
+    };
 
-    if (!videoUrl || !brandName) {
+    const videoUrl =
+      typeof body.videoUrl === "string" ? body.videoUrl.trim() : "";
+    const brandName =
+      typeof body.brandName === "string" ? body.brandName.trim() : "";
+    const caption =
+      typeof body.caption === "string" ? body.caption.trim() : "";
+    const brandAvatar =
+      typeof body.brandAvatar === "string" ? body.brandAvatar.trim() : "";
+
+    const missing: string[] = [];
+    if (!videoUrl) missing.push("videoUrl");
+    if (!brandName) missing.push("brandName");
+    if (!caption) missing.push("caption");
+    if (!brandAvatar) missing.push("brandAvatar");
+    if (missing.length > 0) {
       return NextResponse.json(
-        { error: "Video URL and brand name required" },
+        { error: `Missing required field(s): ${missing.join(", ")}` },
         { status: 400 }
       );
     }
@@ -52,8 +82,8 @@ export async function POST(req: NextRequest) {
     );
 
     const { rows } = await pool.query(
-      "INSERT INTO feed_ads (id, video_url, brand_name, caption, sort_order, active) VALUES (gen_random_uuid(), $1, $2, $3, $4, true) RETURNING *",
-      [videoUrl, brandName, caption, maxRows[0].next_order]
+      "INSERT INTO feed_ads (id, video_url, brand_name, brand_avatar, caption, sort_order, active) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true) RETURNING *",
+      [videoUrl, brandName, brandAvatar, caption, maxRows[0].next_order]
     );
 
     await clearAdsCache();
@@ -62,6 +92,61 @@ export async function POST(req: NextRequest) {
     console.error("Ad save error:", err);
     return NextResponse.json({ error: "Failed to save ad" }, { status: 500 });
   }
+}
+
+// PATCH — bulk reorder. Body: { order: [{ id, sortOrder }, ...] }.
+// Wrapped in a transaction so a partial failure can't leave the table
+// half-reordered. The mobile app reads `ORDER BY sort_order ASC`, so the
+// exact integer values don't matter as long as they're monotonic.
+export async function PATCH(req: NextRequest) {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const order = (body as { order?: Array<{ id: string; sortOrder: number }> })
+    ?.order;
+  if (!Array.isArray(order) || order.length === 0) {
+    return NextResponse.json(
+      { error: "order array required" },
+      { status: 400 }
+    );
+  }
+
+  for (const item of order) {
+    if (!item || typeof item.id !== "string" || !UUID_RE.test(item.id)) {
+      return NextResponse.json({ error: "Invalid id in order" }, { status: 400 });
+    }
+    if (!Number.isFinite(item.sortOrder)) {
+      return NextResponse.json(
+        { error: "Invalid sortOrder in order" },
+        { status: 400 }
+      );
+    }
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const { id, sortOrder } of order) {
+      await client.query("UPDATE feed_ads SET sort_order = $1 WHERE id = $2", [
+        sortOrder,
+        id,
+      ]);
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("Ad reorder error:", err);
+    return NextResponse.json({ error: "Reorder failed" }, { status: 500 });
+  } finally {
+    client.release();
+  }
+
+  await clearAdsCache();
+  return NextResponse.json({ success: true });
 }
 
 // DELETE — remove an ad
