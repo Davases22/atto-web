@@ -19,7 +19,7 @@ import { NextRequest, NextResponse } from "next/server";
  * when the user picks that tile.
  */
 
-const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME || "dxzcutnlp";
+const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME || "da9vymoah";
 const CLOUDINARY_KEY = process.env.CLOUDINARY_API_KEY || "";
 const CLOUDINARY_SECRET = process.env.CLOUDINARY_API_SECRET || "";
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "";

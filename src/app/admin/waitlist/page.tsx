@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Loader2,
+  LogOut,
   Pencil,
   Plus,
   Search,
@@ -58,6 +60,7 @@ const PLATFORMS: { value: Platform; label: string }[] = [
 const PAGE_SIZE = 50;
 
 export default function AdminWaitlistPage() {
+  const router = useRouter();
   const [signups, setSignups] = useState<Signup[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -68,6 +71,17 @@ export default function AdminWaitlistPage() {
   const [editing, setEditing] = useState<Signup | null>(null);
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const signOut = async () => {
+    setSigningOut(true);
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch {
+      // best-effort; even if the request fails the cookie will eventually expire
+    }
+    router.replace("/admin/login");
+  };
 
   // Debounce the search input so we don't refetch on every keystroke.
   useEffect(() => {
@@ -133,22 +147,39 @@ export default function AdminWaitlistPage() {
 
   return (
     <div className="min-h-dvh bg-black text-white">
-      <header className="border-b border-neutral-800 px-4 py-5 sm:px-6">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+      <header className="border-b border-neutral-800 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-bold tracking-tight sm:text-2xl">
               ATTO SOUND
             </h1>
-            <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
-              Waitlist Management · {total} signup{total === 1 ? "" : "s"}
+            <p className="mt-0.5 truncate text-xs text-neutral-500 sm:text-sm">
+              Waitlist · {total} signup{total === 1 ? "" : "s"}
             </p>
           </div>
-          <button
-            onClick={() => setAdding(true)}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80"
-          >
-            <Plus className="h-4 w-4" /> Add
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={() => setAdding(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden xs:inline sm:inline">Add</span>
+            </button>
+            <button
+              onClick={signOut}
+              disabled={signingOut}
+              className="flex items-center gap-1.5 rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-300 transition-colors hover:bg-neutral-900 disabled:opacity-50"
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              {signingOut ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <LogOut className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -162,7 +193,7 @@ export default function AdminWaitlistPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name, email or phone…"
-              className="w-full rounded-xl border border-neutral-700 bg-neutral-950 py-2.5 pl-10 pr-3 text-sm text-white placeholder-neutral-600 focus:border-white focus:outline-none"
+              className="w-full rounded-xl border border-neutral-700 bg-neutral-950 py-2.5 pl-10 pr-3 text-base text-white placeholder-neutral-600 focus:border-white focus:outline-none sm:text-sm"
             />
           </div>
           <div className="flex gap-1 rounded-xl border border-neutral-800 bg-neutral-950 p-1">
@@ -195,64 +226,119 @@ export default function AdminWaitlistPage() {
             No signups match your filters.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-neutral-800">
-            <table className="min-w-full text-sm">
-              <thead className="bg-neutral-950 text-left text-xs uppercase tracking-wider text-neutral-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Phone</th>
-                  <th className="px-4 py-3 font-medium">Platform</th>
-                  <th className="px-4 py-3 font-medium">Joined</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-900">
-                {signups.map((s) => (
-                  <tr key={s.id} className="hover:bg-neutral-950/60">
-                    <td className="px-4 py-3 font-medium">
-                      {s.first_name} {s.last_name}
-                    </td>
-                    <td className="px-4 py-3 text-neutral-400">{s.email}</td>
-                    <td className="px-4 py-3 text-neutral-400">
-                      {s.phone_number || (
-                        <span className="text-neutral-700">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <PlatformChip value={s.platform_preference} />
-                    </td>
-                    <td className="px-4 py-3 text-neutral-500">
-                      {formatDate(s.created_at)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-1">
-                        <button
-                          onClick={() => setEditing(s)}
-                          className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-neutral-900 hover:text-white"
-                          aria-label="Edit"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(s)}
-                          disabled={deletingId === s.id}
-                          className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-red-950 hover:text-red-400 disabled:opacity-50"
-                          aria-label="Delete"
-                        >
-                          {deletingId === s.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
+          <>
+            {/* Mobile: card list. Tables don't survive narrow viewports without
+                making columns ellipsize uncomfortably; cards keep every field
+                readable and put actions within thumb reach. */}
+            <ul className="space-y-2 sm:hidden">
+              {signups.map((s) => (
+                <li
+                  key={s.id}
+                  className="rounded-xl border border-neutral-800 bg-neutral-950 p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-white">
+                        {s.first_name} {s.last_name}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-neutral-400">
+                        {s.email}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-neutral-500">
+                        {s.phone_number || "—"}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2 text-[11px] text-neutral-500">
+                        <PlatformChip value={s.platform_preference} />
+                        <span>·</span>
+                        <span>{formatDate(s.created_at)}</span>
                       </div>
-                    </td>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        onClick={() => setEditing(s)}
+                        className="rounded-lg p-2 text-neutral-400 active:bg-neutral-900 active:text-white"
+                        aria-label="Edit"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(s)}
+                        disabled={deletingId === s.id}
+                        className="rounded-lg p-2 text-neutral-400 active:bg-red-950 active:text-red-400 disabled:opacity-50"
+                        aria-label="Delete"
+                      >
+                        {deletingId === s.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Desktop / tablet: keep the dense table */}
+            <div className="hidden overflow-x-auto rounded-xl border border-neutral-800 sm:block">
+              <table className="min-w-full text-sm">
+                <thead className="bg-neutral-950 text-left text-xs uppercase tracking-wider text-neutral-500">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Name</th>
+                    <th className="px-4 py-3 font-medium">Email</th>
+                    <th className="px-4 py-3 font-medium">Phone</th>
+                    <th className="px-4 py-3 font-medium">Platform</th>
+                    <th className="px-4 py-3 font-medium">Joined</th>
+                    <th className="px-4 py-3" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-neutral-900">
+                  {signups.map((s) => (
+                    <tr key={s.id} className="hover:bg-neutral-950/60">
+                      <td className="px-4 py-3 font-medium">
+                        {s.first_name} {s.last_name}
+                      </td>
+                      <td className="px-4 py-3 text-neutral-400">{s.email}</td>
+                      <td className="px-4 py-3 text-neutral-400">
+                        {s.phone_number || (
+                          <span className="text-neutral-700">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <PlatformChip value={s.platform_preference} />
+                      </td>
+                      <td className="px-4 py-3 text-neutral-500">
+                        {formatDate(s.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => setEditing(s)}
+                            className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-neutral-900 hover:text-white"
+                            aria-label="Edit"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(s)}
+                            disabled={deletingId === s.id}
+                            className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-red-950 hover:text-red-400 disabled:opacity-50"
+                            aria-label="Delete"
+                          >
+                            {deletingId === s.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Pagination */}
@@ -416,10 +502,10 @@ function SignupFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/70 p-3 sm:items-center sm:p-4">
       <form
         onSubmit={submit}
-        className="w-full max-w-md rounded-2xl border border-neutral-800 bg-neutral-950 p-5 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-neutral-800 bg-neutral-950 p-4 shadow-2xl sm:p-5"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
@@ -454,7 +540,7 @@ function SignupFormModal({
                 <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value as CountryCode)}
-                  className="h-full appearance-none rounded-xl border border-neutral-700 bg-neutral-950 py-2 pl-3 pr-7 text-sm text-white focus:border-white focus:outline-none"
+                  className="h-full appearance-none rounded-xl border border-neutral-700 bg-neutral-950 py-2.5 pl-3 pr-7 text-base text-white focus:border-white focus:outline-none sm:py-2 sm:text-sm"
                   aria-label="Country code"
                 >
                   {COUNTRY_OPTIONS.map((c) => (
@@ -469,7 +555,7 @@ function SignupFormModal({
                 value={localPhone}
                 onChange={(e) => setLocalPhone(e.target.value)}
                 placeholder="555 123 4567"
-                className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white placeholder-neutral-700 focus:border-white focus:outline-none"
+                className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-base text-white placeholder-neutral-700 focus:border-white focus:outline-none sm:py-2 sm:text-sm"
               />
             </div>
             <p className="mt-1 text-[11px] text-neutral-600">
@@ -552,7 +638,9 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white placeholder-neutral-700 focus:border-white focus:outline-none"
+        // text-base on mobile prevents iOS Safari from zooming the viewport
+        // when the input receives focus.
+        className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-base text-white placeholder-neutral-700 focus:border-white focus:outline-none sm:py-2 sm:text-sm"
       />
     </div>
   );

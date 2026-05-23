@@ -16,7 +16,10 @@ import { NextRequest, NextResponse } from "next/server";
  * a full secure_url would produce a malformed URL.
  */
 
-const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME || "dxzcutnlp";
+// Fallback matches the value currently set on Vercel
+// (CLOUDINARY_CLOUD_NAME=da9vymoah). The fallback is only used in dev when
+// no .env.local is present; prod always reads from the env var.
+const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME || "da9vymoah";
 const CLOUDINARY_KEY = process.env.CLOUDINARY_API_KEY || "";
 const CLOUDINARY_SECRET = process.env.CLOUDINARY_API_SECRET || "";
 
@@ -63,7 +66,10 @@ export async function POST(req: NextRequest) {
   // to a timestamp if no brand was supplied (e.g. avatar uploaded before
   // the brand name is typed).
   const slug = slugify(brandNameRaw) || `ad-${Date.now()}`;
-  const folder = "atto/ad-avatars";
+  // Folder aligned with the convention used by pre-existing avatars in DB
+  // (e.g. atto/brand-avatars/apple). Earlier draft used atto/ad-avatars,
+  // which would have fragmented storage across two folders.
+  const folder = "atto/brand-avatars";
   const publicId = `${folder}/${slug}`;
 
   const bytes = await file.arrayBuffer();
