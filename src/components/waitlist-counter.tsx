@@ -15,14 +15,11 @@ export default function WaitlistCounter({
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
-    if (!url) return;
-
     async function fetchCount() {
       try {
-        const res = await fetch(url!);
+        const res = await fetch("/api/waitlist/count");
         const data = await res.json();
-        setCount(data.count);
+        if (typeof data.count === "number") setCount(data.count);
       } catch {
         /* silently fail */
       }

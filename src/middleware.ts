@@ -82,5 +82,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  // Gate both the admin UI and the admin-only JSON APIs that mutate data.
+  // Public endpoints under /api/waitlist (the signup form) stay open.
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };
