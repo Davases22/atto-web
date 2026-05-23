@@ -10,6 +10,7 @@ import {
   Plus,
   Search,
   Trash2,
+  Upload,
   X,
   Check,
 } from "lucide-react";
@@ -72,6 +73,37 @@ export default function AdminWaitlistPage() {
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/waitlist/import", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Import failed");
+      toast.success(
+        `Imported ${data.inserted} signup${data.inserted === 1 ? "" : "s"}`,
+        {
+          description: `${data.skipped} duplicate${data.skipped === 1 ? "" : "s"} skipped · ${data.dropped} row${data.dropped === 1 ? "" : "s"} dropped (missing timestamp/email) · total now ${data.total}`,
+        }
+      );
+      await fetchSignups();
+    } catch (err) {
+      toast.error("Couldn't import CSV", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  };
 
   const signOut = async () => {
     setSigningOut(true);
@@ -158,12 +190,32 @@ export default function AdminWaitlistPage() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <label
+              className={`flex cursor-pointer items-center gap-1.5 rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-300 transition-colors hover:bg-neutral-900 ${
+                importing ? "pointer-events-none opacity-50" : ""
+              }`}
+              title="Import CSV"
+            >
+              {importing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">Import</span>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={handleImport}
+                disabled={importing}
+              />
+            </label>
             <button
               onClick={() => setAdding(true)}
               className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-black transition-opacity hover:opacity-80"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden xs:inline sm:inline">Add</span>
+              <span className="hidden sm:inline">Add</span>
             </button>
             <button
               onClick={signOut}

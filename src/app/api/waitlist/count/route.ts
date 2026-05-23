@@ -8,6 +8,11 @@ const pool = new Pool({
 
 // Public counter for the home page. Cached for 10s at the edge so the
 // odometer's 10-second polling can't hammer Postgres if traffic spikes.
+//
+// On DB failure we deliberately return { count: 0 } with a 200 (not a 500
+// with null) because the front-end odometer free-rolls forever when it
+// receives a non-number — better to settle on a temporary 0 and try again
+// on the next 10-second poll than to leave the hero spinning indefinitely.
 export async function GET() {
   try {
     const { rows } = await pool.query(
@@ -22,7 +27,8 @@ export async function GET() {
         },
       }
     );
-  } catch {
-    return NextResponse.json({ count: null }, { status: 500 });
+  } catch (err) {
+    console.error("[/api/waitlist/count] query failed:", err);
+    return NextResponse.json({ count: 0 });
   }
 }
