@@ -66,11 +66,12 @@ export async function POST(req: NextRequest) {
   // to a timestamp if no brand was supplied (e.g. avatar uploaded before
   // the brand name is typed).
   const slug = slugify(brandNameRaw) || `ad-${Date.now()}`;
-  // Folder aligned with the convention used by pre-existing avatars in DB
-  // (e.g. atto/brand-avatars/apple). Earlier draft used atto/ad-avatars,
-  // which would have fragmented storage across two folders.
-  const folder = "atto/brand-avatars";
-  const publicId = `${folder}/${slug}`;
+  // public_id carries the full path; we DO NOT also pass `folder` to the
+  // upload API. Cloudinary's behaviour with both set is to prepend folder
+  // to public_id, which silently produced atto/brand-avatars/atto/brand-avatars/<slug>
+  // on the previous draft. Keeping it as a single param is unambiguous and
+  // matches the value that gets written to feed_ads.brand_avatar.
+  const publicId = `atto/brand-avatars/${slug}`;
 
   const bytes = await file.arrayBuffer();
   const base64 = Buffer.from(bytes).toString("base64");
@@ -80,7 +81,6 @@ export async function POST(req: NextRequest) {
   const crypto = await import("crypto");
   // Cloudinary signing: sorted, ampersand-joined params + secret, sha1.
   const sigParams = [
-    `folder=${folder}`,
     `overwrite=true`,
     `public_id=${publicId}`,
     `timestamp=${timestamp}`,
@@ -92,7 +92,6 @@ export async function POST(req: NextRequest) {
 
   const cloudinaryForm = new FormData();
   cloudinaryForm.append("file", dataUri);
-  cloudinaryForm.append("folder", folder);
   cloudinaryForm.append("overwrite", "true");
   cloudinaryForm.append("public_id", publicId);
   cloudinaryForm.append("timestamp", timestamp);
