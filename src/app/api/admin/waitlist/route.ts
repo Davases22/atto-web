@@ -112,14 +112,43 @@ export async function POST(req: NextRequest) {
       ? body.platform
       : null;
 
-  if (!firstName || !lastName || !email) {
+  // Per-field validation so the UI can surface a specific message rather than
+  // a single "all required" blob. The order matches the on-screen field order.
+  const missing: string[] = [];
+  if (!firstName) missing.push("First name");
+  if (!lastName) missing.push("Last name");
+  if (!email) missing.push("Email");
+  if (missing.length > 0) {
     return NextResponse.json(
-      { error: "First name, last name and email are required" },
+      { error: `${missing.join(", ")} ${missing.length === 1 ? "is" : "are"} required` },
+      { status: 400 }
+    );
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json(
+      { error: "That email doesn't look valid" },
       { status: 400 }
     );
   }
 
   try {
+    // We enforce phone uniqueness in application code because legacy rows
+    // already share phone numbers across accounts and a DB-level constraint
+    // would refuse to apply. This SELECT is cheap (no index needed for the
+    // size of this table; can add one later if it grows).
+    if (phone) {
+      const phoneDupe = await pool.query(
+        "SELECT id FROM waitlist_signups WHERE phone_number = $1 LIMIT 1",
+        [phone]
+      );
+      if ((phoneDupe.rowCount ?? 0) > 0) {
+        return NextResponse.json(
+          { error: "Another signup already uses that phone number" },
+          { status: 409 }
+        );
+      }
+    }
+
     const { rows } = await pool.query(
       `INSERT INTO waitlist_signups
          (first_name, last_name, email, phone_number, platform_preference, source)
@@ -138,6 +167,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ signup: rows[0] }, { status: 201 });
   } catch (err) {
     console.error("[/api/admin/waitlist] create failed:", err);
-    return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+    return NextResponse.json({ error: "Couldn't create signup. Try again." }, { status: 500 });
   }
 }

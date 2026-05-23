@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Loader2,
   Pencil,
@@ -87,11 +88,14 @@ export default function AdminWaitlistPage() {
         offset: String(offset),
       });
       const res = await fetch(`/api/admin/waitlist?${qs.toString()}`);
+      if (!res.ok) throw new Error("Bad response");
       const data = await res.json();
       setSignups(data.signups || []);
       setTotal(data.total || 0);
     } catch {
-      // ignore — empty list shows fallback below
+      toast.error("Couldn't load signups", {
+        description: "Check your connection and try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -101,17 +105,24 @@ export default function AdminWaitlistPage() {
     fetchSignups();
   }, [fetchSignups]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this signup? This cannot be undone.")) return;
-    setDeletingId(id);
+  const handleDelete = async (signup: Signup) => {
+    const label = `${signup.first_name} ${signup.last_name}`.trim() || signup.email;
+    if (!confirm(`Delete ${label}? This cannot be undone.`)) return;
+    setDeletingId(signup.id);
     try {
-      const res = await fetch(`/api/admin/waitlist/${id}`, {
+      const res = await fetch(`/api/admin/waitlist/${signup.id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Delete failed");
+      }
+      toast.success(`${label} was removed from the waitlist`);
       await fetchSignups();
-    } catch {
-      alert("Delete failed");
+    } catch (err) {
+      toast.error("Couldn't delete signup", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
       setDeletingId(null);
     }
@@ -224,7 +235,7 @@ export default function AdminWaitlistPage() {
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(s.id)}
+                          onClick={() => handleDelete(s)}
                           disabled={deletingId === s.id}
                           className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-red-950 hover:text-red-400 disabled:opacity-50"
                           aria-label="Delete"
@@ -352,7 +363,6 @@ function SignupFormModal({
     signup?.platform_preference ?? ""
   );
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const canSubmit = useMemo(
     () => firstName.trim() && lastName.trim() && email.trim() && !saving,
@@ -361,9 +371,14 @@ function SignupFormModal({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    // Surface the first missing required field as a toast so the user knows
+    // exactly which one is blocking the submit, even when the button is
+    // visibly disabled.
+    if (!firstName.trim()) return toast.error("First name is required");
+    if (!lastName.trim()) return toast.error("Last name is required");
+    if (!email.trim()) return toast.error("Email is required");
+    if (saving) return;
     setSaving(true);
-    setError(null);
     try {
       // Build E.164 from the country code + local digits. An empty local
       // means "no phone" — we send null so the column stays clean rather
@@ -389,9 +404,12 @@ function SignupFormModal({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Save failed");
       }
+      toast.success(isEdit ? "Changes saved" : "Signup added");
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      toast.error(isEdit ? "Couldn't save changes" : "Couldn't add signup", {
+        description: err instanceof Error ? err.message : undefined,
+      });
     } finally {
       setSaving(false);
     }
@@ -481,12 +499,6 @@ function SignupFormModal({
             </div>
           </div>
         </div>
-
-        {error && (
-          <p className="mt-3 rounded-lg bg-red-950/40 px-3 py-2 text-xs text-red-300">
-            {error}
-          </p>
-        )}
 
         <div className="mt-5 flex justify-end gap-2">
           <button
