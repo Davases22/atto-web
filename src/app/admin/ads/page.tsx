@@ -36,7 +36,11 @@ interface Ad {
   active: boolean;
 }
 
-const CLOUD_NAME = "dxzcutnlp";
+// Cloud name comes from env (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME), so it
+// always matches whatever CLOUDINARY_CLOUD_NAME the server-side upload
+// routes use. Fallback covers `next dev` without .env.local set.
+const CLOUD_NAME =
+  process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "da9vymoah";
 
 /**
  * Build a thumbnail URL from a Cloudinary video URL.
@@ -305,10 +309,12 @@ export default function AdminAdsPage() {
       <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
         {/* ── Create form ─────────────────────────────────────────── */}
         <div className="mb-8 space-y-3">
-          <div className="flex items-center gap-3">
-            {/* Avatar picker */}
+          <div className="flex items-stretch gap-3">
+            {/* Avatar picker — sized to match the stacked input column so the
+                two read as a single block. h-28 w-28 (112px) lines up with
+                2× py-3 inputs + the 12px gap. */}
             <label
-              className={`relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-dashed border-neutral-700 bg-neutral-950 transition-colors hover:border-white ${
+              className={`relative flex h-28 w-28 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-dashed border-neutral-700 bg-neutral-950 transition-colors hover:border-white ${
                 uploadingAvatar ? "pointer-events-none opacity-60" : ""
               }`}
             >
@@ -320,9 +326,14 @@ export default function AdminAdsPage() {
                   className="h-full w-full object-cover"
                 />
               ) : uploadingAvatar ? (
-                <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-neutral-400" />
               ) : (
-                <ImageIcon className="h-5 w-5 text-neutral-500" />
+                <div className="flex flex-col items-center gap-1 px-2 text-center">
+                  <ImageIcon className="h-6 w-6 text-neutral-500" />
+                  <span className="text-[10px] uppercase tracking-wide text-neutral-500">
+                    Brand avatar
+                  </span>
+                </div>
               )}
               <input
                 type="file"
@@ -333,43 +344,65 @@ export default function AdminAdsPage() {
               />
             </label>
 
-            <div className="flex-1 space-y-3">
+            <div className="flex flex-1 flex-col gap-3">
               <input
                 type="text"
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
                 placeholder="Brand name (e.g. Apple, Nike)"
-                className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm text-white placeholder-neutral-600 focus:border-white focus:outline-none"
+                className="w-full flex-1 rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm text-white placeholder-neutral-600 focus:border-white focus:outline-none"
               />
               <input
                 type="text"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="Caption"
-                className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm text-white placeholder-neutral-600 focus:border-white focus:outline-none"
+                className="w-full flex-1 rounded-xl border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm text-white placeholder-neutral-600 focus:border-white focus:outline-none"
               />
             </div>
           </div>
 
+          {/* Video upload — styled as a primary CTA so it's always read as
+              "the button" even when disabled. When fields are missing we
+              keep the icon + label at full opacity (so it doesn't blend
+              into the background) and show what's missing on a second line
+              in amber so the user knows exactly what to fix. */}
           <label
-            className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-700 px-4 py-8 text-center transition-colors hover:border-white sm:flex-row sm:gap-3 ${
-              uploading || !canPublish
-                ? "pointer-events-none opacity-50"
-                : ""
+            className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 px-4 py-6 text-center transition-colors sm:py-7 ${
+              uploading
+                ? "pointer-events-none border-neutral-700 bg-neutral-950"
+                : canPublish
+                  ? "cursor-pointer border-white bg-white text-black hover:bg-neutral-200"
+                  : "pointer-events-none border-neutral-700 bg-neutral-950"
             }`}
           >
-            {uploading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
-            ) : (
-              <Upload className="h-5 w-5 text-neutral-400" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              {uploading ? (
+                <Loader2
+                  className={`h-5 w-5 animate-spin ${
+                    canPublish ? "text-black" : "text-neutral-400"
+                  }`}
+                />
+              ) : (
+                <Upload
+                  className={`h-5 w-5 ${
+                    canPublish ? "text-black" : "text-neutral-400"
+                  }`}
+                />
+              )}
+              <span
+                className={`text-sm font-semibold ${
+                  canPublish && !uploading ? "text-black" : "text-neutral-400"
+                }`}
+              >
+                {uploading ? "Uploading video..." : "Upload ad video"}
+              </span>
+            </div>
+            {!uploading && !canPublish && (
+              <span className="text-xs text-amber-400">
+                Add {missingFields.join(", ")} first
+              </span>
             )}
-            <span className="text-sm text-neutral-400">
-              {uploading
-                ? "Uploading video..."
-                : canPublish
-                  ? "Tap to upload ad video"
-                  : `Missing: ${missingFields.join(", ")}`}
-            </span>
             <input
               type="file"
               accept="video/*"
