@@ -15,18 +15,26 @@ export default function WaitlistCounter({
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
-    async function fetchCount() {
+    // The OdometerDigit free-rolls while its target is null (intended as a
+    // brief loading flourish). If the API ever fails to return a number,
+    // count stays null and the hero spins forever — we guarantee the first
+    // attempt always settles the wheel by falling back to 0 on any error.
+    async function fetchCount(isFirst: boolean) {
       try {
         const res = await fetch("/api/waitlist/count");
         const data = await res.json();
-        if (typeof data.count === "number") setCount(data.count);
+        if (typeof data.count === "number") {
+          setCount(data.count);
+        } else if (isFirst) {
+          setCount(0);
+        }
       } catch {
-        /* silently fail */
+        if (isFirst) setCount(0);
       }
     }
 
-    fetchCount();
-    const interval = setInterval(fetchCount, 10000);
+    fetchCount(true);
+    const interval = setInterval(() => fetchCount(false), 10000);
     return () => clearInterval(interval);
   }, []);
 

@@ -9,8 +9,12 @@ import {
   hashDisclosure,
 } from "@/lib/sms-compliance";
 
+// Web-owned data (waitlist + consent ledger) lives in its own Railway
+// Postgres, isolated from the social-service DB that other backends wipe
+// on deploy. DATABASE_URL is kept as a fallback so local/preview envs
+// without WEB_DATABASE_URL still boot.
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.WEB_DATABASE_URL || process.env.DATABASE_URL,
   max: 3,
 });
 
