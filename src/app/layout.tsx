@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import Footer from "@/components/footer";
@@ -35,6 +35,12 @@ export const metadata: Metadata = {
     title,
     description,
   },
+};
+
+// Match the browser chrome / status bar to the matte black so there's no
+// contrasting "bar" above the page on mobile.
+export const viewport: Viewport = {
+  themeColor: "#100e10",
 };
 
 export default function RootLayout({
