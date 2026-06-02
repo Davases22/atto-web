@@ -33,10 +33,10 @@ export default function Hero() {
   return (
     <section className="relative flex min-h-dvh w-full flex-col bg-[#100e10]">
       {/* Uniform matte black — no lighting effect — so the background blends
-          edge to edge with no visible "bar" near the top. On mobile the column
-          fills the viewport so the footer links fall just below the fold; on
-          desktop it only takes the space left above the links. */}
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-7 px-4 py-10 sm:min-h-0 sm:flex-1 sm:gap-5 sm:py-6">
+          edge to edge with no visible "bar" near the top. The column fills the
+          full viewport on every breakpoint so the footer/legal links sit just
+          below the fold and only appear once you scroll. */}
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-7 px-4 py-10 sm:gap-5 sm:py-6">
         {/* 3D render of the equalizer badge. To restore the animated SVG, re-import
             Logo from "@/components/logo" and replace <Image> with <Logo className="w-72 sm:w-88" />. */}
         <Image
