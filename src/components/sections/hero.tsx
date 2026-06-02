@@ -96,9 +96,10 @@ export default function Hero() {
         <WaitlistCounter increment={signUpCount} />
       </div>
 
-      {/* Footer links pinned to the bottom of the first screen — the legal
-          text lives in <Footer> just below the fold. */}
-      <nav className="flex justify-center gap-6 pb-5 text-xs text-neutral-500">
+      {/* Legal links pushed a good way below the fold — the centered column
+          above already fills the viewport, and this extra top margin guarantees
+          you have to scroll to reach them on every screen size. */}
+      <nav className="mt-[40vh] flex justify-center gap-6 pb-5 text-xs text-neutral-500">
         <Link href="/privacy" className="transition-colors hover:text-white">
           Privacy Policy
         </Link>
