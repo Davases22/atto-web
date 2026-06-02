@@ -54,7 +54,7 @@ export default function Hero() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Sign Up"
-          className="transition-transform duration-150 will-change-transform hover:-translate-y-0.5 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70"
+          className="mt-6 transition-transform duration-150 will-change-transform hover:-translate-y-0.5 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70 sm:mt-4"
         >
           <Image
             src="/signup-3d.png"
