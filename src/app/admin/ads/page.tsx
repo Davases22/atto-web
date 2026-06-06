@@ -28,6 +28,43 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+// Upload via XHR (not fetch) so we get real request-body upload progress —
+// fetch can't report it. Resolves with the parsed JSON response; rejects with
+// a descriptive Error (Cloudinary's reason when available) on failure.
+function xhrUpload(
+  url: string,
+  form: FormData,
+  onProgress: (ratio: number) => void
+): Promise<{ secure_url?: string }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded / e.total);
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          reject(new Error("Cloudinary: invalid response"));
+        }
+        return;
+      }
+      let reason = `${xhr.status} ${xhr.statusText}`;
+      try {
+        reason = JSON.parse(xhr.responseText)?.error?.message || reason;
+      } catch {
+        // non-JSON body, keep the status line
+      }
+      reject(new Error(`Cloudinary: ${reason}`));
+    };
+    xhr.onerror = () =>
+      reject(new Error("Cloudinary: network error during upload"));
+    xhr.send(form);
+  });
+}
+
 interface Ad {
   id: string;
   video_url: string;
@@ -74,6 +111,8 @@ export default function AdminAdsPage() {
   // Compression progress 0..100 while ffmpeg.wasm re-encodes the video, or
   // null when not compressing. Drives the button's status line.
   const [compressPct, setCompressPct] = useState<number | null>(null);
+  // Cloudinary upload progress 0..100, or null when not uploading.
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [brandName, setBrandName] = useState("");
   const [caption, setCaption] = useState("");
@@ -208,23 +247,14 @@ export default function AdminAdsPage() {
       cloudForm.append("folder", folder);
       cloudForm.append("signature", signature);
 
-      const uploadRes = await fetch(
+      setUploadPct(0);
+      const uploadJson = await xhrUpload(
         `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
-        { method: "POST", body: cloudForm }
+        cloudForm,
+        (ratio) => setUploadPct(Math.round(ratio * 100))
       );
-      if (!uploadRes.ok) {
-        // Surface Cloudinary's actual reason (size limit, bad signature, …)
-        // instead of the old silent generic alert.
-        let reason = `${uploadRes.status} ${uploadRes.statusText}`;
-        try {
-          const body = await uploadRes.json();
-          reason = body?.error?.message || reason;
-        } catch {
-          // non-JSON body, keep the status line
-        }
-        throw new Error(`Cloudinary: ${reason}`);
-      }
-      const { secure_url: videoUrl } = await uploadRes.json();
+      const videoUrl = uploadJson.secure_url;
+      if (!videoUrl) throw new Error("Cloudinary: no video URL in response");
 
       // 3. Save URL + metadata (including avatar public_id if set).
       const res = await fetch("/api/ads", {
@@ -256,6 +286,7 @@ export default function AdminAdsPage() {
     } finally {
       setUploading(false);
       setCompressPct(null);
+      setUploadPct(null);
       e.target.value = "";
     }
   };
@@ -447,9 +478,11 @@ export default function AdminAdsPage() {
               >
                 {compressPct !== null
                   ? `Compressing… ${compressPct}%`
-                  : uploading
-                    ? "Uploading video..."
-                    : "Upload ad video"}
+                  : uploadPct !== null
+                    ? `Uploading… ${uploadPct}%`
+                    : uploading
+                      ? "Uploading video..."
+                      : "Upload ad video"}
               </span>
             </div>
             {!uploading && !canPublish && (

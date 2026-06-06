@@ -56,11 +56,18 @@ export default function RootLayout({
         {children}
         <Footer />
         <Toaster
-          position="bottom-right"
+          position="top-center"
           theme="dark"
           richColors
           closeButton
-          duration={5000}
+          duration={6000}
+          // Wider toasts (default is 356px) and larger text so upload
+          // status/errors are readable on mobile, where they were easy to
+          // miss tucked into the bottom corner.
+          style={{ "--width": "min(92vw, 480px)" } as React.CSSProperties}
+          toastOptions={{
+            style: { fontSize: "1rem", padding: "16px 18px" },
+          }}
         />
       </body>
     </html>
