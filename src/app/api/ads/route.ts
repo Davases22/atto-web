@@ -77,13 +77,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { rows: maxRows } = await pool.query(
-      "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM feed_ads"
+    // New ads land FIRST (smallest sort_order) so they show at the top of
+    // both the admin list and the mobile feed (ORDER BY sort_order ASC) —
+    // immediate visual confirmation that the upload landed. Admins can still
+    // drag to reorder afterwards. sort_order is relative, so going negative
+    // is fine.
+    const { rows: minRows } = await pool.query(
+      "SELECT COALESCE(MIN(sort_order), 0) - 1 AS next_order FROM feed_ads"
     );
 
     const { rows } = await pool.query(
       "INSERT INTO feed_ads (id, video_url, brand_name, brand_avatar, caption, sort_order, active) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true) RETURNING *",
-      [videoUrl, brandName, brandAvatar, caption, maxRows[0].next_order]
+      [videoUrl, brandName, brandAvatar, caption, minRows[0].next_order]
     );
 
     await clearAdsCache();
