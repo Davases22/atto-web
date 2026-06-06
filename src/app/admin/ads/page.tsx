@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 import { ImageIcon, Loader2, Trash2, Upload, GripVertical } from "lucide-react";
+import { toast } from "sonner";
+import { compressVideo } from "@/lib/compressVideo";
 import {
   DndContext,
   DragEndEvent,
@@ -69,6 +71,9 @@ export default function AdminAdsPage() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  // Compression progress 0..100 while ffmpeg.wasm re-encodes the video, or
+  // null when not compressing. Drives the button's status line.
+  const [compressPct, setCompressPct] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [brandName, setBrandName] = useState("");
   const [caption, setCaption] = useState("");
@@ -133,7 +138,7 @@ export default function AdminAdsPage() {
       setPendingAvatarId(publicId);
       setPendingAvatarUrl(secureUrl);
     } catch {
-      alert("Avatar upload failed");
+      toast.error("Avatar upload failed");
     } finally {
       setUploadingAvatar(false);
     }
@@ -154,21 +159,50 @@ export default function AdminAdsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!canPublish) {
-      alert(`Missing: ${missingFields.join(", ")}`);
+      toast.error(`Missing: ${missingFields.join(", ")}`);
       e.target.value = "";
       return;
     }
     setUploading(true);
     try {
+      // 0. Compress the video in the browser before it ever leaves the
+      //    device. This is the main fix: raw phone clips are easily 100+ MB,
+      //    which Cloudinary's free plan rejects / times out on. If ffmpeg
+      //    can't load or the encode fails we DON'T block the upload — we fall
+      //    back to the original file and let Cloudinary's own error surface
+      //    below, so a flaky CDN never makes the page unusable.
+      let toUpload = file;
+      setCompressPct(0);
+      try {
+        const result = await compressVideo(file, (ratio) =>
+          setCompressPct(Math.round(ratio * 100))
+        );
+        toUpload = result.file;
+        const mb = (n: number) => (n / 1024 / 1024).toFixed(1);
+        toast.success(
+          `Compressed ${mb(result.originalBytes)}MB → ${mb(
+            result.compressedBytes
+          )}MB`
+        );
+      } catch (err) {
+        console.error("Video compression failed, uploading original:", err);
+        toast.warning("Compression skipped — uploading original video");
+      } finally {
+        setCompressPct(null);
+      }
+
       // 1. Signed payload from our API (no file passes through Vercel).
       const signRes = await fetch("/api/ads/sign");
-      if (!signRes.ok) throw new Error("sign");
+      if (!signRes.ok) {
+        const detail = await signRes.text().catch(() => "");
+        throw new Error(`Sign request failed (${signRes.status}) ${detail}`);
+      }
       const { cloudName, apiKey, timestamp, folder, signature } =
         await signRes.json();
 
       // 2. Upload the video straight to Cloudinary (bypasses 4.5 MB limit).
       const cloudForm = new FormData();
-      cloudForm.append("file", file);
+      cloudForm.append("file", toUpload);
       cloudForm.append("api_key", apiKey);
       cloudForm.append("timestamp", timestamp);
       cloudForm.append("folder", folder);
@@ -178,7 +212,18 @@ export default function AdminAdsPage() {
         `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
         { method: "POST", body: cloudForm }
       );
-      if (!uploadRes.ok) throw new Error("cloudinary");
+      if (!uploadRes.ok) {
+        // Surface Cloudinary's actual reason (size limit, bad signature, …)
+        // instead of the old silent generic alert.
+        let reason = `${uploadRes.status} ${uploadRes.statusText}`;
+        try {
+          const body = await uploadRes.json();
+          reason = body?.error?.message || reason;
+        } catch {
+          // non-JSON body, keep the status line
+        }
+        throw new Error(`Cloudinary: ${reason}`);
+      }
       const { secure_url: videoUrl } = await uploadRes.json();
 
       // 3. Save URL + metadata (including avatar public_id if set).
@@ -198,14 +243,19 @@ export default function AdminAdsPage() {
         setCaption("");
         setPendingAvatarId(null);
         setPendingAvatarUrl(null);
+        toast.success("Ad published");
       } else {
-        const err = await res.json();
-        alert(err.error || "Upload failed");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Save failed (${res.status})`);
       }
-    } catch {
-      alert("Upload failed");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Upload failed";
+      console.error("Ad upload failed:", err);
+      // Keep the toast visible longer so the real reason can be read.
+      toast.error(message, { duration: 8000 });
     } finally {
       setUploading(false);
+      setCompressPct(null);
       e.target.value = "";
     }
   };
@@ -217,7 +267,7 @@ export default function AdminAdsPage() {
       await fetch(`/api/ads?id=${id}`, { method: "DELETE" });
       await fetchAds();
     } catch {
-      alert("Delete failed");
+      toast.error("Delete failed");
     } finally {
       setDeleting(null);
     }
@@ -252,7 +302,7 @@ export default function AdminAdsPage() {
       if (!patchRes.ok) throw new Error("patch");
     } catch {
       setAds(previous);
-      alert("Avatar update failed");
+      toast.error("Avatar update failed");
     } finally {
       setRowAvatarLoading(null);
     }
@@ -289,7 +339,7 @@ export default function AdminAdsPage() {
       if (!res.ok) throw new Error("reorder");
     } catch {
       setAds(previous);
-      alert("Reorder failed");
+      toast.error("Reorder failed");
     }
   };
 
@@ -395,7 +445,11 @@ export default function AdminAdsPage() {
                   canPublish && !uploading ? "text-black" : "text-neutral-400"
                 }`}
               >
-                {uploading ? "Uploading video..." : "Upload ad video"}
+                {compressPct !== null
+                  ? `Compressing… ${compressPct}%`
+                  : uploading
+                    ? "Uploading video..."
+                    : "Upload ad video"}
               </span>
             </div>
             {!uploading && !canPublish && (
