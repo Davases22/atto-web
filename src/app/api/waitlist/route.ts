@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { Pool, PoolClient } from "pg";
 import { z } from "zod";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
@@ -8,6 +8,7 @@ import {
   MARKETING_SMS_DISCLOSURE,
   hashDisclosure,
 } from "@/lib/sms-compliance";
+import { sendWelcomeEmail } from "@/lib/welcome-email";
 
 // Web-owned data (waitlist + consent ledger) lives in its own Railway
 // Postgres, isolated from the social-service DB that other backends wipe
@@ -116,22 +117,21 @@ export async function POST(req: NextRequest) {
   try {
     await client.query("BEGIN");
 
-    const dupe = await client.query(
-      "SELECT id FROM waitlist_signups WHERE email = $1 LIMIT 1",
-      [data.email]
-    );
-    if (dupe.rowCount && dupe.rowCount > 0) {
-      await client.query("ROLLBACK");
-      return NextResponse.json({ duplicate: true }, { status: 409 });
-    }
-
+    // Atomic insert-or-detect-duplicate. A plain SELECT-then-INSERT races on
+    // concurrent double-submits (both pass the SELECT, the 2nd INSERT hits the
+    // UNIQUE(email) constraint and 500s); ON CONFLICT turns that into a clean 409.
     const insertUser = await client.query(
       `INSERT INTO waitlist_signups
          (first_name, last_name, email, phone_number, platform_preference)
        VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (email) DO NOTHING
        RETURNING id`,
       [data.firstName, data.lastName, data.email, e164, data.platformPreference]
     );
+    if (insertUser.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return NextResponse.json({ duplicate: true }, { status: 409 });
+    }
     const userId = insertUser.rows[0].id as string;
 
     await insertConsent(client, {
@@ -171,6 +171,38 @@ export async function POST(req: NextRequest) {
   } finally {
     client.release();
   }
+
+  // Send the platform-specific welcome email after the response is flushed.
+  // Runs on Vercel via after() (not killed when the function returns) and
+  // never fails the signup if Resend errors.
+  after(async () => {
+    try {
+      // Respect prior unsubscribes. Fail open: if the table doesn't exist yet
+      // (migration not applied), still send rather than silently dropping it.
+      let suppressed = false;
+      try {
+        const r = await pool.query(
+          "SELECT 1 FROM email_unsubscribes WHERE email = $1 LIMIT 1",
+          [data.email]
+        );
+        suppressed = !!(r.rowCount && r.rowCount > 0);
+      } catch (e) {
+        console.error("[/api/waitlist] unsubscribe check failed (sending anyway):", e);
+      }
+      if (suppressed) {
+        console.log(`[/api/waitlist] skipping welcome — ${data.email} unsubscribed`);
+        return;
+      }
+
+      await sendWelcomeEmail({
+        to: data.email,
+        firstName: data.firstName,
+        platform: data.platformPreference,
+      });
+    } catch (err) {
+      console.error("[/api/waitlist] welcome email failed:", err);
+    }
+  });
 
   return NextResponse.json({ ok: true });
 }
