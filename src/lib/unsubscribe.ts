@@ -5,7 +5,9 @@ import crypto from "node:crypto";
 // in emails.send(), so we sign our own HMAC token and host the endpoint.)
 
 const SECRET = process.env.UNSUBSCRIBE_SECRET || "";
-const SITE_URL = (process.env.SITE_URL || "https://attosound.com").replace(
+// Canonical host is www (apex 307-redirects to it); point unsubscribe URLs
+// straight at www so the RFC 8058 one-click POST never hits a redirect.
+const SITE_URL = (process.env.SITE_URL || "https://www.attosound.com").replace(
   /\/$/,
   ""
 );
