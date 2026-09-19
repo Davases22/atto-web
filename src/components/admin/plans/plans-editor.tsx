@@ -127,6 +127,19 @@ export function PlansEditor() {
     });
   };
 
+  /** Set a whole column at once: every feature for one plan, or none. */
+  const onSetPlan = (planKey: string, all: boolean) => {
+    setDraft((prev) => ({
+      ...prev,
+      [planKey]: all ? entitlements.map((e) => e.key) : [],
+    }));
+  };
+
+  /** Clear the whole matrix so a fresh assignment starts from zero. */
+  const onClearAll = () => {
+    setDraft(Object.fromEntries(plans.map((p) => [p.key, [] as string[]])));
+  };
+
   const saveMatrix = async () => {
     if (changedPlans.length === 0) return;
     setSavingMatrix(true);
@@ -352,6 +365,8 @@ export function PlansEditor() {
             changedCount={changedPlans.length}
             saving={savingMatrix}
             onToggle={onToggle}
+            onSetPlan={onSetPlan}
+            onClearAll={onClearAll}
             onSave={saveMatrix}
             onDiscard={() => setDraft({})}
           />

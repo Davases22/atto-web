@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Save, Undo2 } from "lucide-react";
+import { Eraser, Loader2, Save, Undo2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,8 @@ export function FeatureMatrix({
   changedCount,
   saving,
   onToggle,
+  onSetPlan,
+  onClearAll,
   onSave,
   onDiscard,
 }: {
@@ -42,10 +44,13 @@ export function FeatureMatrix({
   changedCount: number;
   saving: boolean;
   onToggle: (planKey: string, entitlementKey: string, checked: boolean) => void;
+  onSetPlan: (planKey: string, all: boolean) => void;
+  onClearAll: () => void;
   onSave: () => void;
   onDiscard: () => void;
 }) {
   const dirty = changedCount > 0;
+  const anyChecked = plans.some((plan) => (draft[plan.key] ?? plan.entitlements).length > 0);
 
   return (
     <Card className="border-neutral-800">
@@ -57,6 +62,16 @@ export function FeatureMatrix({
           </CardDescription>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClearAll}
+            disabled={!anyChecked || saving}
+            title="Untick every box in every plan"
+          >
+            <Eraser aria-hidden />
+            Clear all
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -110,6 +125,25 @@ export function FeatureMatrix({
                               Inactive
                             </Badge>
                           ) : null}
+                          <div className="mt-1 flex items-center gap-1 text-[11px] font-normal">
+                            <button
+                              type="button"
+                              onClick={() => onSetPlan(plan.key, true)}
+                              disabled={saving}
+                              className="rounded px-1 text-neutral-400 underline-offset-2 hover:text-white hover:underline disabled:opacity-50"
+                            >
+                              All
+                            </button>
+                            <span className="text-neutral-700">/</span>
+                            <button
+                              type="button"
+                              onClick={() => onSetPlan(plan.key, false)}
+                              disabled={saving}
+                              className="rounded px-1 text-neutral-400 underline-offset-2 hover:text-white hover:underline disabled:opacity-50"
+                            >
+                              None
+                            </button>
+                          </div>
                         </div>
                       </TableHead>
                     );
