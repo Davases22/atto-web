@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Upload, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { PageHeader } from "@/components/admin/page-header";
 
 interface AppIcon {
   id: string;
@@ -108,37 +109,31 @@ export default function AdminAppIconsPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-black text-white">
-      <header className="border-b border-neutral-800 px-4 py-5 sm:px-6">
-        <div className="mx-auto max-w-3xl">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-            ATTO SOUND
-          </h1>
-          <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
-            App Icon Management
-          </p>
-        </div>
-      </header>
+    <div className="max-w-3xl">
+      <PageHeader
+        title="App icons"
+        description="Alternate home screen icons users can pick."
+      />
 
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+      <div>
         {/* Notice about the native constraint */}
-        <div className="mb-8 flex items-start gap-3 rounded-xl border border-amber-900/60 bg-amber-950/30 p-4 text-sm">
+        <div className="mb-8 flex items-start gap-3 rounded-xl border border-neutral-800 bg-neutral-950 p-4 text-sm">
           <AlertCircle
-            className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-400"
+            className="mt-0.5 h-5 w-5 flex-shrink-0 text-neutral-300"
             aria-hidden
           />
           <div>
-            <p className="font-medium text-amber-200">
+            <p className="font-medium text-white">
               Icons must be pre-bundled in the binary.
             </p>
-            <p className="mt-1 text-amber-200/70">
-              The <code className="rounded bg-amber-900/40 px-1">slotName</code>{" "}
+            <p className="mt-1 text-neutral-400">
+              The <code className="rounded bg-neutral-800 px-1">slotName</code>{" "}
               you choose here only points at a slot already shipped in the app
               build. Adding a NEW icon requires editing{" "}
-              <code className="rounded bg-amber-900/40 px-1">app.json</code> in
+              <code className="rounded bg-neutral-800 px-1">app.json</code> in
               the mobile repo and cutting a new EAS build. Current shipped
-              slots: <code className="rounded bg-amber-900/40 px-1">studio</code>,{" "}
-              <code className="rounded bg-amber-900/40 px-1">chrome</code>.
+              slots: <code className="rounded bg-neutral-800 px-1">studio</code>,{" "}
+              <code className="rounded bg-neutral-800 px-1">chrome</code>.
             </p>
           </div>
         </div>
@@ -263,7 +258,7 @@ export default function AdminAppIconsPage() {
                     </p>
                     <p className="text-xs text-neutral-500">
                       sort {icon.sortOrder} ·{" "}
-                      <span className={icon.isActive ? "text-emerald-400" : "text-neutral-500"}>
+                      <span className={icon.isActive ? "text-white" : "text-neutral-500"}>
                         {icon.isActive ? "active" : "inactive"}
                       </span>
                     </p>
@@ -285,7 +280,7 @@ export default function AdminAppIconsPage() {
             </ul>
           )}
         </section>
-      </main>
+      </div>
     </div>
   );
 }

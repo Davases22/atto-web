@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Upload, Trash2, Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/admin/page-header";
 
 interface Logo {
   id: string;
@@ -77,21 +78,13 @@ export default function AdminLogosPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-black text-white">
-      {/* Header */}
-      <header className="border-b border-neutral-800 px-4 py-5 sm:px-6">
-        <div className="mx-auto max-w-2xl">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-            ATTO SOUND
-          </h1>
-          <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
-            Creator Logo Management
-          </p>
-        </div>
-      </header>
+    <div className="max-w-2xl">
+      <PageHeader
+        title="Creator logos"
+        description="Logos creators can pick in the app."
+      />
 
-      {/* Content */}
-      <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
+      <div>
         {/* Upload */}
         <label
           className={`mb-8 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-700 px-4 py-8 text-center transition-colors hover:border-white sm:flex-row sm:gap-3 sm:px-6 sm:py-10 ${
@@ -176,7 +169,7 @@ export default function AdminLogosPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

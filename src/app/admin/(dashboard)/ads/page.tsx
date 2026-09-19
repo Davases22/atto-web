@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { ImageIcon, Loader2, Trash2, Upload, GripVertical } from "lucide-react";
+import { PageHeader } from "@/components/admin/page-header";
 import { toast } from "sonner";
 // NOTE: client-side compression (src/lib/compressVideo.ts) is intentionally
 // disabled for now — ffmpeg.wasm fails on iOS Safari, so we upload the
@@ -350,19 +351,10 @@ export default function AdminAdsPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-black text-white">
-      <header className="border-b border-neutral-800 px-4 py-5 sm:px-6">
-        <div className="mx-auto max-w-2xl">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-            ATTO SOUND
-          </h1>
-          <p className="mt-0.5 text-xs text-neutral-500 sm:text-sm">
-            Feed Ad Management
-          </p>
-        </div>
-      </header>
+    <div className="max-w-2xl">
+      <PageHeader title="Ads" description="Video ads shown in the feed." />
 
-      <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
+      <div>
         {/* ── Create form ─────────────────────────────────────────── */}
         <div className="mb-8 space-y-3">
           <div className="flex items-stretch gap-3">
@@ -422,7 +414,7 @@ export default function AdminAdsPage() {
               "the button" even when disabled. When fields are missing we
               keep the icon + label at full opacity (so it doesn't blend
               into the background) and show what's missing on a second line
-              in amber so the user knows exactly what to fix. */}
+              in grey so the user knows exactly what to fix. */}
           <label
             className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 px-4 py-6 text-center transition-colors sm:py-7 ${
               uploading
@@ -459,7 +451,7 @@ export default function AdminAdsPage() {
               </span>
             </div>
             {!uploading && !canPublish && (
-              <span className="text-xs text-amber-400">
+              <span className="text-xs text-neutral-400">
                 Add {missingFields.join(", ")} first
               </span>
             )}
@@ -510,7 +502,7 @@ export default function AdminAdsPage() {
             </DndContext>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

@@ -19,7 +19,12 @@ export async function middleware(req: NextRequest) {
 
   // The login page itself and its API are the only admin paths that must
   // stay reachable without a session — otherwise users could never sign in.
-  if (pathname === "/admin/login" || pathname === "/api/admin/login") {
+  // Logout only clears a cookie, so it is safe to reach with a stale session.
+  if (
+    pathname === "/admin/login" ||
+    pathname === "/api/admin/login" ||
+    pathname === "/api/admin/logout"
+  ) {
     return NextResponse.next();
   }
 

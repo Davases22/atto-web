@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Download,
   Loader2,
-  LogOut,
   Pencil,
   Plus,
   Search,
@@ -21,6 +19,7 @@ import {
   parsePhoneNumberFromString,
   type CountryCode,
 } from "libphonenumber-js";
+import { PageHeader } from "@/components/admin/page-header";
 
 // Pre-compute the country list once. libphonenumber-js bundles ~250 countries;
 // we sort by dial code so common ones (US/CA = 1) stay near the top of the
@@ -62,7 +61,6 @@ const PLATFORMS: { value: Platform; label: string }[] = [
 const PAGE_SIZE = 50;
 
 export default function AdminWaitlistPage() {
-  const router = useRouter();
   const [signups, setSignups] = useState<Signup[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -73,7 +71,6 @@ export default function AdminWaitlistPage() {
   const [editing, setEditing] = useState<Signup | null>(null);
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [signingOut, setSigningOut] = useState(false);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -132,16 +129,6 @@ export default function AdminWaitlistPage() {
       setImporting(false);
       e.target.value = "";
     }
-  };
-
-  const signOut = async () => {
-    setSigningOut(true);
-    try {
-      await fetch("/api/admin/logout", { method: "POST" });
-    } catch {
-      // best-effort; even if the request fails the cookie will eventually expire
-    }
-    router.replace("/admin/login");
   };
 
   // Debounce the search input so we don't refetch on every keystroke.
@@ -207,18 +194,12 @@ export default function AdminWaitlistPage() {
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   return (
-    <div className="min-h-dvh bg-black text-white">
-      <header className="border-b border-neutral-800 px-4 py-4 sm:px-6 sm:py-5">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-bold tracking-tight sm:text-2xl">
-              ATTO SOUND
-            </h1>
-            <p className="mt-0.5 truncate text-xs text-neutral-500 sm:text-sm">
-              Waitlist · {total} signup{total === 1 ? "" : "s"}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
+    <div className="max-w-5xl">
+      <PageHeader
+        title="Waitlist"
+        description={`${total} signup${total === 1 ? "" : "s"}`}
+        actions={
+          <>
             <button
               onClick={handleExport}
               disabled={exporting}
@@ -259,25 +240,11 @@ export default function AdminWaitlistPage() {
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Add</span>
             </button>
-            <button
-              onClick={signOut}
-              disabled={signingOut}
-              className="flex items-center gap-1.5 rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-300 transition-colors hover:bg-neutral-900 disabled:opacity-50"
-              aria-label="Sign out"
-              title="Sign out"
-            >
-              {signingOut ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <LogOut className="h-4 w-4" />
-              )}
-              <span className="hidden sm:inline">Sign out</span>
-            </button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+      <div>
         {/* Search + platform filter */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
@@ -463,7 +430,7 @@ export default function AdminWaitlistPage() {
             </div>
           </div>
         )}
-      </main>
+      </div>
 
       {(adding || editing) && (
         <SignupFormModal

@@ -9,8 +9,8 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   // Allow the middleware to bounce users back to wherever they were trying
-  // to reach. Default to /admin/waitlist since that's the main admin entry.
-  const next = params.get("next") || "/admin/waitlist";
+  // to reach. Default to the dashboard overview.
+  const next = params.get("next") || "/admin";
 
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
