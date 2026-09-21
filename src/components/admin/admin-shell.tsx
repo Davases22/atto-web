@@ -14,6 +14,7 @@ import {
   Menu,
   Shapes,
   type LucideIcon,
+  Wallpaper,
 } from "lucide-react";
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Plans and features", href: "/admin/plans", icon: CreditCard },
   { label: "App logo", href: "/admin/app-logo", icon: ImageIcon },
   { label: "App icons", href: "/admin/app-icons", icon: LayoutGrid },
+  { label: "Chat wallpapers", href: "/admin/chat-wallpapers", icon: Wallpaper },
   { label: "Creator logos", href: "/admin/logos", icon: Shapes },
   { label: "Ads", href: "/admin/ads", icon: Megaphone },
   { label: "Waitlist", href: "/admin/waitlist", icon: ListChecks },
@@ -91,7 +93,7 @@ function NavList({
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
               active
                 ? "bg-white font-medium text-black"
-                : "text-neutral-400 hover:bg-neutral-900 hover:text-white"
+                : "text-neutral-400 hover:bg-neutral-900 hover:text-white",
             )}
           >
             <Icon className="size-4 shrink-0" aria-hidden />
@@ -123,10 +125,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div
-      data-admin-shell
-      className="flex min-h-dvh bg-black text-white"
-    >
+    <div data-admin-shell className="flex min-h-dvh bg-black text-white">
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-neutral-800 bg-black lg:flex">
         <div className="px-5 py-5">
           <Brand />
@@ -158,7 +157,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <Brand />
               </SheetHeader>
               <div className="flex-1 overflow-y-auto px-3 py-3">
-                <NavList pathname={pathname} onNavigate={() => setMenuOpen(false)} />
+                <NavList
+                  pathname={pathname}
+                  onNavigate={() => setMenuOpen(false)}
+                />
               </div>
               <Separator className="bg-neutral-800" />
               <div className="p-3">
