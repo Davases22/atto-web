@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/admin/page-header";
 
 interface AppLogo {
   imageUrl: string;
+  /** Launch splash image of its own; absent means the splash follows imageUrl. */
+  splashImageUrl?: string | null;
   minVersion: number | null;
   fallbackImageUrl: string | null;
   updatedAt: string;
@@ -86,6 +88,10 @@ export default function AdminAppLogoPage() {
 
   const primary = useImagePick();
   const fallback = useImagePick();
+  const splash = useImagePick();
+  const splashFileRef = useRef<HTMLInputElement>(null);
+  const [splashBusy, setSplashBusy] = useState(false);
+  const [splashError, setSplashError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const fbRef = useRef<HTMLInputElement>(null);
 
@@ -240,9 +246,13 @@ export default function AdminAppLogoPage() {
                   <div className="flex h-36 items-center justify-center rounded-lg bg-black">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={seg.img}
+                      src={logo?.splashImageUrl || seg.img}
                       alt={`${seg.label} splash`}
-                      className="max-h-12 max-w-[60%] object-contain"
+                      className={
+                        logo?.splashImageUrl
+                          ? "max-h-24 max-w-[50%] object-contain"
+                          : "max-h-12 max-w-[60%] object-contain"
+                      }
                     />
                   </div>
                   {seg.note && (
@@ -257,8 +267,8 @@ export default function AdminAppLogoPage() {
         <section className="rounded-xl border border-neutral-800 bg-neutral-950 p-5">
           <h2 className="mb-1 text-sm font-semibold">Upload a new logo</h2>
           <p className="mb-4 text-xs text-neutral-500">
-            This logo is used in the feed header and in the launch splash (the
-            splash follows it from the next app launch). Include the full wordmark
+            This logo is used in the feed header, and in the launch splash too
+            unless you set a splash logo below. Include the full wordmark
             (ATTO and SOUND) in the image: with a custom logo the app no longer
             draws SOUND underneath. Transparent PNG,
             recommended around 1024 by 360 px (wide, about 2.85 to 1). The app
@@ -303,6 +313,96 @@ export default function AdminAppLogoPage() {
           >
             <Upload className="h-4 w-4" /> Continue
           </button>
+        </section>
+
+        <section className="rounded-xl border border-neutral-800 bg-neutral-950 p-5">
+          <h2 className="mb-1 text-sm font-semibold">Launch splash logo</h2>
+          <p className="mb-4 text-xs text-neutral-500">
+            Optional. The image shown alone on black while the app opens, for
+            example the round mark from the website. Any shape works: the app
+            sizes it from the image. Leave it empty and the splash uses the
+            logo above. A change shows from the second launch after the app
+            has refreshed it.
+          </p>
+
+          <div className="mb-4 flex h-40 items-center justify-center rounded-lg bg-black">
+            {logo?.splashImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo.splashImageUrl} alt="Current splash" className="max-h-32 max-w-[60%] object-contain" />
+            ) : (
+              <span className="text-xs text-neutral-600">Following the main logo</span>
+            )}
+          </div>
+
+          <input
+            ref={splashFileRef}
+            type="file"
+            accept="image/png,image/webp,image/jpeg"
+            onChange={(e) => splash.pick(e.target.files?.[0])}
+            className="block w-full text-sm text-neutral-300 file:mr-4 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold file:text-black"
+          />
+          {splash.preview && (
+            <div className="mt-4 flex items-center justify-center rounded-lg border border-neutral-800 bg-black p-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={splash.preview} alt="Splash preview" className="max-h-32 max-w-[60%] object-contain" />
+            </div>
+          )}
+          {splashError && (
+            <div className="mt-4 flex items-start gap-2 rounded-lg bg-red-950/50 px-3 py-2 text-sm text-red-300">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{splashError}</span>
+            </div>
+          )}
+
+          <div className="mt-4 flex gap-3">
+            <button
+              disabled={!splash.file || splash.tooLarge || splashBusy}
+              onClick={async () => {
+                if (!splash.file) return;
+                setSplashBusy(true);
+                setSplashError(null);
+                try {
+                  const body = new FormData();
+                  body.append("file", splash.file);
+                  const res = await fetch("/api/app-logo/splash", { method: "POST", body });
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok) throw new Error(data.error ?? "Upload failed");
+                  splash.reset();
+                  if (splashFileRef.current) splashFileRef.current.value = "";
+                  await fetchLogo();
+                } catch (err) {
+                  setSplashError(err instanceof Error ? err.message : "Upload failed");
+                } finally {
+                  setSplashBusy(false);
+                }
+              }}
+              className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+            >
+              {splashBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Set splash logo
+            </button>
+            {logo?.splashImageUrl && (
+              <button
+                disabled={splashBusy}
+                onClick={async () => {
+                  setSplashBusy(true);
+                  setSplashError(null);
+                  try {
+                    const res = await fetch("/api/app-logo/splash", { method: "DELETE" });
+                    if (!res.ok) throw new Error("Could not remove the splash logo");
+                    await fetchLogo();
+                  } catch (err) {
+                    setSplashError(err instanceof Error ? err.message : "Request failed");
+                  } finally {
+                    setSplashBusy(false);
+                  }
+                }}
+                className="rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-300 disabled:opacity-40"
+              >
+                Use the main logo instead
+              </button>
+            )}
+          </div>
         </section>
       </div>
 
