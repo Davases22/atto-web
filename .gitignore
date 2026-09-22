@@ -43,3 +43,5 @@ next-env.d.ts
 # local only full page preview of the client page
 public/home/preview.html
 public/home/_before.html
+public/home/_b.html
+public/home/_a0.html
