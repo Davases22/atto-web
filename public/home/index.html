@@ -191,6 +191,70 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
 
 .rise{transition:opacity .8s ease,transform .8s cubic-bezier(.2,.75,.3,1)}
 .rise.pending{opacity:.001;transform:translateY(26px)}
+
+/* ------------------------------------------------------------ the waitlist
+   The form the page already had in the app, brought onto this ground: the
+   same white plastic on the same #100E10, no second colour. It posts to
+   /api/waitlist, the endpoint the previous home used, so a name typed here
+   lands in the same table the admin reads. */
+.mdl{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom));
+  background:rgba(6,5,7,.74);-webkit-backdrop-filter:blur(16px) saturate(120%);backdrop-filter:blur(16px) saturate(120%);
+  opacity:0;transition:opacity .22s ease}
+.mdl.on{opacity:1}
+.mdl[hidden]{display:none}
+.sheet{position:relative;width:100%;max-width:468px;max-height:min(88vh,860px);overflow:auto;
+  background:#141316;border:1px solid rgba(237,236,234,.13);border-radius:24px;
+  padding:clamp(24px,3.4vw,34px);text-align:left;
+  box-shadow:0 30px 90px rgba(0,0,0,.62);
+  transform:translateY(14px) scale(.985);transition:transform .26s cubic-bezier(.2,.75,.3,1)}
+.mdl.on .sheet{transform:none}
+.sheet .x{position:absolute;top:14px;right:16px;width:34px;height:34px;border-radius:999px;
+  color:#9A97A1;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center}
+.sheet .x:hover{color:var(--text);background:rgba(237,236,234,.08)}
+.mdlTitle{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4.4vw,36px);
+  line-height:1.05;margin:2px 0 6px}
+.mdlSub{color:var(--mute);font-size:14.5px;margin:0 0 20px}
+.f{display:block;margin-bottom:14px}
+.f>span{display:block;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:#9A97A1;margin-bottom:7px}
+.f input,.f select{width:100%;height:48px;background:#0B0A0C;color:var(--text);
+  border:1px solid rgba(237,236,234,.14);border-radius:13px;padding:0 14px;
+  font-family:var(--sans);font-size:16px;line-height:1;outline:0;
+  transition:border-color .15s ease,background .15s ease}
+.f input:focus,.f select:focus{border-color:rgba(237,236,234,.42);background:#0E0D10}
+.f input::placeholder{color:#63606A}
+.f input[aria-invalid="true"]{border-color:#7E4A4A}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tel{display:grid;grid-template-columns:118px 1fr;gap:10px}
+.tel select{padding-right:8px}
+.seg{display:flex;height:48px;padding:4px;gap:4px;background:#0B0A0C;
+  border:1px solid rgba(237,236,234,.14);border-radius:13px}
+.seg button{flex:1;border-radius:10px;font-size:14.5px;font-weight:600;color:#8B8891;
+  transition:background .16s ease,color .16s ease}
+.seg button.on{background:#EDEEEF;color:#141316}
+.cons{margin:18px 0 6px;display:grid;gap:12px;
+  border:1px solid rgba(237,236,234,.1);border-radius:14px;padding:14px}
+.ck{display:grid;grid-template-columns:20px 1fr;gap:11px;align-items:start;cursor:pointer}
+.ck input{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:1px 0 0;
+  border:1px solid rgba(237,236,234,.3);border-radius:6px;background:#0B0A0C;cursor:pointer;
+  display:grid;place-content:center}
+.ck input:checked{background:#EDEEEF;border-color:#EDEEEF}
+.ck input:checked::after{content:"";width:10px;height:6px;margin-top:-2px;
+  border-left:2px solid #141316;border-bottom:2px solid #141316;transform:rotate(-45deg)}
+.ck span{font-size:12.5px;line-height:1.5;color:#8B8891}
+.ck a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+.signup.wide{width:100%;margin-top:16px;padding:16px 24px}
+.signup[disabled]{opacity:.42;cursor:not-allowed}
+.msg{min-height:20px;margin:12px 0 0;font-size:13.5px;text-align:center;color:#9A97A1}
+.msg.bad{color:#D89B9B}
+.done{text-align:center;padding:14px 0 6px}
+.done .tick{width:54px;height:54px;margin:0 auto 16px;border-radius:999px;background:#EDEEEF;
+  color:#141316;display:flex;align-items:center;justify-content:center;font-size:26px}
+.done h3{font-family:var(--serif);font-weight:400;font-size:clamp(26px,4vw,32px);margin:0 0 8px}
+.done p{color:var(--mute);font-size:14.5px;margin:0 0 20px}
+@media (max-width:420px){.two{grid-template-columns:1fr}.tel{grid-template-columns:104px 1fr}}
+
 </style>
 </head>
 <body>
@@ -308,6 +372,62 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
   </div>
 </footer>
 
+
+<!-- ------------------------------------------------------------- waitlist -->
+<div class="mdl" id="mdl" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mdlTitle">
+    <button class="x" id="mdlX" type="button" aria-label="Close">&#215;</button>
+
+    <div id="mdlForm">
+      <h3 class="mdlTitle" id="mdlTitle">Join the waitlist</h3>
+      <p class="mdlSub">We will tell you when it is your turn.</p>
+
+      <form id="wl" novalidate>
+        <div class="two">
+          <label class="f"><span>First name</span>
+            <input id="wlFirst" autocomplete="given-name" placeholder="John" required></label>
+          <label class="f"><span>Last name</span>
+            <input id="wlLast" autocomplete="family-name" placeholder="Doe" required></label>
+        </div>
+
+        <label class="f"><span>Email</span>
+          <input id="wlEmail" type="email" inputmode="email" autocomplete="email" placeholder="john@example.com" required></label>
+
+        <div class="f"><span>Phone</span>
+          <div class="tel">
+            <select id="wlCc" aria-label="Country code"></select>
+            <input id="wlPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="555 123 4567" required>
+          </div>
+        </div>
+
+        <div class="f"><span>Platform</span>
+          <div class="seg" id="wlOs" role="group" aria-label="Platform">
+            <button type="button" class="on" data-os="ios" aria-pressed="true">iOS</button>
+            <button type="button" data-os="android" aria-pressed="false">Android</button>
+          </div>
+        </div>
+
+        <div class="cons">
+          <label class="ck"><input type="checkbox" id="wlT">
+            <span>I agree to receive one-time verification codes (OTP) and account-related SMS messages from ATTO SOUND at the phone number I provided. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. See our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>.</span></label>
+          <label class="ck"><input type="checkbox" id="wlM">
+            <span>I agree to receive promotional and marketing text messages from ATTO SOUND, including app launch announcements, invitations to download the ATTO SOUND app, product updates, and offers at the phone number provided. Msg frequency varies (up to 4 msgs/month). Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of any purchase. See our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>.</span></label>
+        </div>
+
+        <button class="signup wide" id="wlGo" type="submit">Submit</button>
+        <p class="msg" id="wlMsg" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <div id="mdlDone" class="done" hidden>
+      <div class="tick" aria-hidden="true">&#10003;</div>
+      <h3>You are on the list.</h3>
+      <p>We will be in touch soon.</p>
+      <button class="signup wide" id="mdlClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
 <a class="sticky signup" id="sticky" href="#beta">Sign Up</a>
 
 <script>
@@ -400,21 +520,45 @@ put('ig','ig'); put('tt','tt'); put('yt','yt');
   size(); var t; addEventListener('resize',function(){ clearTimeout(t); t=setTimeout(size,120); },{passive:true});
 })();
 
-/* ------------------------------------------------------------- the count */
+/* ------------------------------------------------------------- the count
+   The number is the real one: /api/waitlist/count, the same counter the
+   previous home polled. The roll still runs while the request is in the
+   air, and if it fails the page keeps the figure it shipped with. */
 (function(){
   var el=document.getElementById('odo'); if(!el) return;
-  var v='0160', i;
-  for(i=0;i<v.length;i++){ var s=document.createElement('i'); s.textContent='0'; el.appendChild(s); }
-  var cells=el.children;
-  setTimeout(function(){
-    for(i=0;i<v.length;i++)(function(i){
+  var v='0160', i, cells;
+  for(i=0;i<4;i++){ var s=document.createElement('i'); s.textContent='0'; el.appendChild(s); }
+  cells=el.children;
+
+  function roll(){
+    for(var i=0;i<4;i++)(function(i){
       var target=v[i], step=0, n=6+i*4;
       var id=setInterval(function(){
         if(step>=n){ cells[i].textContent=target; clearInterval(id); return; }
         cells[i].textContent=Math.floor(Math.random()*10); step++;
       },36);
     })(i);
-  },420);
+    el.setAttribute('aria-label', String(parseInt(v,10))+' people signed up');
+  }
+
+  function load(then){
+    fetch('/api/waitlist/count',{cache:'no-store'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var n=d&&typeof d.count==='number'?d.count:0;
+        if(n>0) v=String(n).length>4?String(n):('0000'+n).slice(-4);
+      })
+      .catch(function(){})
+      .then(function(){ if(then) then(); });
+  }
+
+  /* the roll fires on its own clock so a slow network never holds the page */
+  var rolled=false;
+  function once(){ if(rolled) return; rolled=true; roll(); }
+  load(once); setTimeout(once,1400);
+
+  /* after somebody joins, count them in */
+  window.attoCount=function(){ load(function(){ roll(); }); };
 })();
 
 /* ------------------------------------------------------------- reveals */
@@ -440,21 +584,112 @@ put('ig','ig'); put('tt','tt'); put('yt','yt');
   },{passive:true});
 })();
 
-/* ---------------------------------------------------------------- sign-up */
+/* ---------------------------------------------------------------- sign-up
+   All three Sign Up buttons (hero, bottom and the floating one) open the
+   waitlist form and it posts to /api/waitlist, the same endpoint and the
+   same table the previous home and the admin already use. The phone is
+   sent in E.164 and the server validates it, so a bad number comes back
+   as a message instead of a silent drop. */
 (function(){
-  /* ==========================================================
-     PASTE THE SIGN-UP LINK HERE — this one line drives all
-     three Sign Up buttons (hero, bottom, and the floating one).
-     Example: var SIGNUP_URL = 'https://forms.gle/xxxxxxx';
-     ========================================================== */
-  var SIGNUP_URL = '';
+  var CODES = ['+1 US','+44 UK','+34 ES','+52 MX','+33 FR','+49 DE','+39 IT','+55 BR',
+    '+57 CO','+54 AR','+56 CL','+51 PE','+58 VE','+81 JP','+82 KR','+86 CN','+91 IN',
+    '+61 AU','+64 NZ','+351 PT','+31 NL','+46 SE','+41 CH','+43 AT','+48 PL','+90 TR',
+    '+971 AE','+966 SA','+20 EG','+27 ZA','+234 NG','+254 KE'];
 
-  var buttons = document.querySelectorAll('.signup');
-  if (SIGNUP_URL) {
-    buttons.forEach(function(el){
-      el.href = SIGNUP_URL; el.target = '_blank'; el.rel = 'noopener';
+  var mdl   = document.getElementById('mdl');
+  var sheet = mdl && mdl.querySelector('.sheet');
+  var form  = document.getElementById('wl');
+  if(!mdl||!form) return;
+
+  var first=document.getElementById('wlFirst'), last=document.getElementById('wlLast'),
+      email=document.getElementById('wlEmail'), cc=document.getElementById('wlCc'),
+      phone=document.getElementById('wlPhone'), go=document.getElementById('wlGo'),
+      msg=document.getElementById('wlMsg'), tr=document.getElementById('wlT'),
+      mk=document.getElementById('wlM'), seg=document.getElementById('wlOs'),
+      pane=document.getElementById('mdlForm'), done=document.getElementById('mdlDone');
+  var os='ios', busy=false, opener=null;
+
+  CODES.forEach(function(c){
+    var parts=c.split(' '), o=document.createElement('option');
+    o.value=parts[0]; o.textContent=parts[1]+' '+parts[0]; cc.appendChild(o);
+  });
+
+  seg.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-os]'); if(!b) return;
+    os=b.getAttribute('data-os');
+    [].forEach.call(seg.children,function(x){
+      var on=x===b; x.classList.toggle('on',on); x.setAttribute('aria-pressed',on?'true':'false');
     });
+  });
+
+  function valid(){
+    return first.value.trim() && last.value.trim() &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()) &&
+      phone.value.replace(/\D/g,'').length>=6 && tr.checked;
   }
+  function sync(){ go.disabled = busy || !valid(); }
+  ['input','change'].forEach(function(ev){ form.addEventListener(ev,sync); });
+  sync();
+
+  function open(e){
+    if(e) e.preventDefault();
+    opener = document.activeElement;
+    mdl.hidden=false; document.body.style.overflow='hidden';
+    requestAnimationFrame(function(){ mdl.classList.add('on'); });
+    setTimeout(function(){ (done.hidden?first:document.getElementById('mdlClose')).focus(); },60);
+  }
+  function close(){
+    mdl.classList.remove('on'); document.body.style.overflow='';
+    setTimeout(function(){ mdl.hidden=true; },220);
+    if(opener&&opener.focus) opener.focus();
+  }
+
+  [].forEach.call(document.querySelectorAll('.signup'),function(el){
+    el.addEventListener('click',open);
+  });
+  if(location.hash==='#signup') setTimeout(function(){ open(); },120);
+
+  document.getElementById('mdlX').addEventListener('click',close);
+  document.getElementById('mdlClose').addEventListener('click',close);
+  mdl.addEventListener('mousedown',function(e){ if(e.target===mdl) close(); });
+  addEventListener('keydown',function(e){
+    if(mdl.hidden) return;
+    if(e.key==='Escape'){ close(); return; }
+    if(e.key!=='Tab') return;
+    var f=sheet.querySelectorAll('a[href],button:not([disabled]),input,select');
+    if(!f.length) return;
+    var a=f[0], z=f[f.length-1];
+    if(e.shiftKey && document.activeElement===a){ e.preventDefault(); z.focus(); }
+    else if(!e.shiftKey && document.activeElement===z){ e.preventDefault(); a.focus(); }
+  });
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    if(busy||!valid()) return;
+    busy=true; sync(); go.textContent='Submitting...'; msg.textContent=''; msg.className='msg';
+
+    fetch('/api/waitlist',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        firstName:first.value.trim(), lastName:last.value.trim(),
+        email:email.value.trim(), phone:cc.value+phone.value.replace(/\D/g,''),
+        platformPreference:os,
+        consentTransactionalSms:true, consentMarketingSms:!!mk.checked
+      })
+    }).then(function(r){
+      if(r.ok){ pane.hidden=true; done.hidden=false; document.getElementById('mdlClose').focus();
+        if(window.attoCount) window.attoCount(); return; }
+      if(r.status===409){ throw new Error('That email is already on the list.'); }
+      if(r.status===400){ throw new Error('Check the email and the phone number and try again.'); }
+      throw new Error('Something went wrong. Please try again.');
+    }).catch(function(err){
+      msg.textContent=err.message||'Something went wrong. Please try again.';
+      msg.className='msg bad';
+    }).then(function(){
+      busy=false; go.textContent='Submit'; sync();
+    });
+  });
 })();
 })();
 </script>
