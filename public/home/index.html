@@ -270,6 +270,24 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
   .cue{bottom:clamp(56px,8.5vh,78px)}
 }
 
+
+/* ------------------------------------------------------ read it as pages
+   "One thought at a time. Each page takes almost a screen of scrolling to
+   get to." So on a phone every idea owns the whole screen and centres
+   itself, and the scroll settles on one page rather than leaving two half
+   ideas on it. Proximity, not mandatory, and no forced stop: a long swipe
+   still runs, it just lands square. The order, the words and the desktop
+   are untouched. */
+@media (max-width:560px){
+  html{scroll-snap-type:y proximity}
+  .hero,.heroB,#hear,.statement,.season,#beta{
+    min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+    scroll-snap-align:center}
+  .heroB{padding-block:clamp(34px,7vh,64px)}
+  #hear,.season,#beta,.statement{padding-block:clamp(40px,8vh,72px)}
+  footer{scroll-snap-align:end}
+}
+
 </style>
 </head>
 <body>
@@ -352,7 +370,7 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
 </section>
 
 <!-- ------------------------------------------------------------ the season -->
-<section class="band">
+<section class="band season">
   <div class="col">
     <div class="kick rise pending">The ATTO Creator Challenge</div>
     <h2 class="display rise pending" style="margin-top:18px">A competition judged on talent. Nothing&nbsp;else.</h2>
