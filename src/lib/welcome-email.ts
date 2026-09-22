@@ -34,18 +34,16 @@ interface Content {
 // Shared narrative — identical for both platforms (verbatim from the brand
 // copy, with minor punctuation cleanup).
 const STORY: string[] = [
-  "ATTO Sound is a platform designed to help incarcerated artists and creators showcase their work, connect with supporters and reach new audiences.",
-  "During this pilot phase, we're testing features, gathering feedback, and building the foundation for the community we're creating together.",
-  "As part of the first wave you'll join a community that will be participating in a creative showcase. Participants will receive weekly creative challenges, with standout submissions featured throughout the program and eligible for <strong>$225 in weekly cash rewards</strong>. Selections will be based on creativity, engagement and community response. Additional details will be shared in the coming weeks.",
-  "For now, we encourage you to use ATTO Sound normally — create, explore, engage with others, and help us understand what works and what doesn't.",
-  "Because this is a pilot program you may encounter bugs, unfinished features, or areas that need improvement. If something feels confusing, broken, or could be better, please let us know through the app. Your feedback will directly influence what we build next.",
-  "A final update will be released in one week that enables incarcerated users to call directly into the app like a standard phone number, allowing them to begin recording and creating through ATTO Sound.",
+  "ATTO Sound is a platform designed to help incarcerated creators showcase their work, connect with supporters and reach new audiences.",
+  "During this pilot, we're testing features, gathering feedback, and building the foundation for the community we're creating together.",
+  "As part of the first wave, we encourage you to use ATTO Sound normally — create, explore, engage with others, and help us understand what works and what doesn't.",
+  "ATTO Sound is in its beta stage so you may encounter bugs, unfinished features, or areas that need improvement. If something feels confusing, broken, or could be better, please let us know through the app. Your feedback will directly influence what we build next. ATTO Sound is far from complete.",
   "Thank you for being here at the beginning and helping build what ATTO Sound is becoming.",
   "A place where incarcerated creators can express themselves freely, connect with the world, and build real opportunities.",
 ];
 
 const LEAD =
-  "You've been accepted into our early-access pilot and are among the first people helping shape the platform before public launch. Here's how to get started on your device:";
+  "You've been accepted into our closed beta pilot, and are among the first people helping shape the platform before public launch.";
 
 export async function sendWelcomeEmail(opts: {
   to: string;
@@ -168,7 +166,17 @@ function textBody(c: Content): string {
     "",
     stripTags(LEAD),
     "",
-    `${c.ctaLabel}: ${c.ctaUrl || "https://attosound.com"}`,
+    "Click here to get started:",
+    `${c.ctaUrl || "https://attosound.com"}`,
+    "",
+    ...STORY.map((p) => stripTags(p)),
+    "",
+    "— Team ATTO",
+    "",
+    "---",
+    "",
+    "Getting started on your device",
+    "Here's how to install ATTO Sound:",
     "",
     ...c.steps.map((s, i) => `${i + 1}. ${stripTags(s)}`),
     "",
@@ -177,12 +185,6 @@ function textBody(c: Content): string {
     ...c.troubleshoot.items.map((it) => `- ${stripTags(it)}`),
     "",
     c.note,
-    "",
-    "---",
-    "",
-    ...STORY.map((p) => stripTags(p)),
-    "",
-    "— The ATTO Sound Team",
     "",
     "You're receiving this because you joined the ATTO Sound waitlist.",
     `Unsubscribe: ${c.unsubUrl}`,
@@ -246,8 +248,13 @@ function shell(c: Content): string {
             <tr>
               <td bgcolor="#000000" style="padding:8px 32px 0 32px;">
                 <p style="margin:0 0 6px 0;font-size:15px;color:#a3a3a3;">Hello ${safeName},</p>
-                <h1 style="margin:0 0 14px 0;font-size:25px;line-height:1.25;font-weight:700;color:#ffffff;">Welcome to ATTO Sound 🎧</h1>
+                <h1 style="margin:0 0 14px 0;font-size:25px;line-height:1.25;font-weight:700;color:#ffffff;">Welcome to ATTO Sound</h1>
                 <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:#d4d4d4;">${LEAD}</p>
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="#000000" style="padding:4px 32px 0 32px;">
+                <p style="margin:0 0 10px 0;font-size:15px;line-height:1.6;color:#d4d4d4;">Click here to get started:</p>
               </td>
             </tr>
             <tr>
@@ -261,6 +268,25 @@ function shell(c: Content): string {
             </tr>
             <tr>
               <td bgcolor="#000000" style="padding:24px 32px 0 32px;">
+                ${storyHtml}
+                <p style="margin:8px 0 0 0;font-size:15px;line-height:1.6;color:#ffffff;">— Team ATTO</p>
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="#000000" style="padding:28px 32px 0 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                  <td height="1" bgcolor="#1f1f1f" style="height:1px;line-height:1px;font-size:1px;">&nbsp;</td>
+                </tr></table>
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="#000000" style="padding:24px 32px 0 32px;">
+                <p style="margin:0 0 6px 0;font-size:17px;font-weight:700;color:#ffffff;">Getting started on your device</p>
+                <p style="margin:0;font-size:15px;line-height:1.6;color:#d4d4d4;">Here's how to install ATTO Sound:</p>
+              </td>
+            </tr>
+            <tr>
+              <td bgcolor="#000000" style="padding:14px 32px 0 32px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                   ${stepsHtml}
                 </table>
@@ -280,19 +306,6 @@ function shell(c: Content): string {
             <tr>
               <td bgcolor="#000000" style="padding:14px 32px 0 32px;">
                 <p style="margin:0;font-size:13px;line-height:1.5;color:#8a8a8a;">${note}</p>
-              </td>
-            </tr>
-            <tr>
-              <td bgcolor="#000000" style="padding:28px 32px 0 32px;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-                  <td height="1" bgcolor="#1f1f1f" style="height:1px;line-height:1px;font-size:1px;">&nbsp;</td>
-                </tr></table>
-              </td>
-            </tr>
-            <tr>
-              <td bgcolor="#000000" style="padding:24px 32px 0 32px;">
-                ${storyHtml}
-                <p style="margin:8px 0 0 0;font-size:15px;line-height:1.6;color:#ffffff;">— The ATTO Sound Team</p>
               </td>
             </tr>
             <tr>
