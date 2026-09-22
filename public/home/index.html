@@ -255,6 +255,21 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
 .done p{color:var(--mute);font-size:14.5px;margin:0 0 20px}
 @media (max-width:420px){.two{grid-template-columns:1fr}.tel{grid-template-columns:104px 1fr}}
 
+
+/* ------------------------------------------------- the hero on a phone
+   The client reads this page on a phone, and there the mark takes 82vw,
+   so the wordmark and the line under it were sitting on the edge of it
+   while the arrow hugged the bottom of the screen. Same structure, same
+   order, only the air: the block below the mark drops, the arrow comes
+   up off the edge, and the four gaps read as one rhythm instead of a
+   crowd at the top and a hole at the bottom. Desktop is untouched. */
+@media (max-width:560px){
+  .hero{padding-block:clamp(24px,5vh,44px) clamp(96px,13vh,124px)}
+  .lockup{margin-top:clamp(58px,8.5vh,76px)}
+  .hero h1{margin-top:clamp(46px,6.9vh,62px)}
+  .cue{bottom:clamp(44px,6.6vh,60px)}
+}
+
 </style>
 </head>
 <body>
