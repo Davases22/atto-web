@@ -15,7 +15,7 @@ import {
   Shapes,
   type LucideIcon,
   Wallpaper,
-} from "lucide-react";
+ ListTree } from "lucide-react";
 import Logo from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -39,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
   { label: "Plans and features", href: "/admin/plans", icon: CreditCard },
   { label: "App logo", href: "/admin/app-logo", icon: ImageIcon },
+  { label: "App menu", href: "/admin/app-menu", icon: ListTree },
   { label: "App icons", href: "/admin/app-icons", icon: LayoutGrid },
   { label: "Chat wallpapers", href: "/admin/chat-wallpapers", icon: Wallpaper },
   { label: "Creator logos", href: "/admin/logos", icon: Shapes },
