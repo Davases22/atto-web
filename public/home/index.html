@@ -98,8 +98,11 @@ h2.display{font-size:clamp(34px,5.6vw,64px)}
 /* the second screen: what it is, and the way in */
 .heroB{padding-inline:var(--gut);padding-block:clamp(52px,9vh,96px) var(--band);
   text-align:center}
-/* The statements' size and rhythm, so this block belongs to the same page. */
-.heroBTitle{font-size:clamp(38px,6.2vw,74px);letter-spacing:.01em}
+/* The mark, smaller than the opening one so this reads as a section and not
+   as a second front door. */
+.heroBMark{margin-top:0}
+.heroBMark img{width:clamp(104px,20vw,140px)}
+.heroBMark .bar{height:clamp(26px,4.8vw,36px)}
 .heroB .lede{margin-inline:auto;margin-top:clamp(20px,2.6vw,28px)}
 
 /* a quiet cue that there is more, sitting on the bottom edge of the first screen */
@@ -322,11 +325,14 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
 
 <section class="heroB">
   <div class="col">
-    <!-- The client, Sep 25: this block should read like the statements, with
-         ATTO SOUND at the top as the headline. Same serif display, same
-         supporting line under it, and the sign up and the counter keep their
-         place below. -->
-    <h2 class="display heroBTitle">ATTO SOUND</h2>
+    <!-- The client, Sep 25, by voice: "instead of it saying ATTO Sound as a
+         headline, the ATTO Sound logo is there". The same lockup the first
+         screen wears, a little smaller so it reads as a mark on this block
+         rather than a second opening. -->
+    <div class="lockup heroBMark">
+      <img src="/home/assets/atto-word.png" alt="ATTO SOUND">
+      <span class="bar" aria-hidden="true"></span><span class="sound">SOUND</span>
+    </div>
     <p class="lede">ATTO Sound is a creator platform for people who are incarcerated. Create what matters. Preserve what&rsquo;s yours. Leave something behind.</p>
 
     <div class="acts">
