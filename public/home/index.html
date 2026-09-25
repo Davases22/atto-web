@@ -98,7 +98,9 @@ h2.display{font-size:clamp(34px,5.6vw,64px)}
 /* the second screen: what it is, and the way in */
 .heroB{padding-inline:var(--gut);padding-block:clamp(52px,9vh,96px) var(--band);
   text-align:center}
-.heroB .lede{margin-inline:auto}
+/* The statements' size and rhythm, so this block belongs to the same page. */
+.heroBTitle{font-size:clamp(38px,6.2vw,74px);letter-spacing:.01em}
+.heroB .lede{margin-inline:auto;margin-top:clamp(20px,2.6vw,28px)}
 
 /* a quiet cue that there is more, sitting on the bottom edge of the first screen */
 .cue{position:absolute;left:50%;bottom:clamp(18px,3.4vh,34px);translate:-50% 0;
@@ -320,6 +322,11 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
 
 <section class="heroB">
   <div class="col">
+    <!-- The client, Sep 25: this block should read like the statements, with
+         ATTO SOUND at the top as the headline. Same serif display, same
+         supporting line under it, and the sign up and the counter keep their
+         place below. -->
+    <h2 class="display heroBTitle">ATTO SOUND</h2>
     <p class="lede">ATTO Sound is a creator platform for people who are incarcerated. Create what matters. Preserve what&rsquo;s yours. Leave something behind.</p>
 
     <div class="acts">
