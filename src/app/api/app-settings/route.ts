@@ -6,8 +6,10 @@ import { NextRequest, NextResponse } from "next/server";
  * GET    -> everything the dashboard edits: the feed menu (order, labels,
  *           icons, hidden), the splash mark scale, and the allowed keys and
  *           icon names the app can draw.
- * PUT    -> { key: "feed-menu", items: [...] } or { key: "splash-scale", scale }
- * DELETE -> ?key=feed-menu | splash-scale, back to the app's built in default.
+ * PUT    -> { key: "feed-menu", items } | { key: "splash-scale", scale }
+ *           | { key: "min-build", build } | { key: "update-copy", title, message, button, url }
+ * DELETE -> ?key=feed-menu | splash-scale | min-build, back to the default
+ *           (min-build cleared means nobody is blocked).
  *
  * The app receives the values inside its app-logo request on every launch, so
  * a change here reaches phones on their next launch or refresh, no build.
@@ -16,7 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_API_URL = process.env.BACKEND_API_URL || "";
 const ADMIN_API_SECRET = process.env.ADMIN_API_SECRET || "";
 
-const KEYS = new Set(["feed-menu", "splash-scale"]);
+const KEYS = new Set(["feed-menu", "splash-scale", "min-build", "update-copy"]);
 
 function backendUrl(path: string): string {
   return `${BACKEND_API_URL.replace(/\/$/, "")}${path}`;
@@ -52,7 +54,16 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   const missing = configMissing();
   if (missing) return missing;
-  let body: { key?: string; items?: unknown; scale?: unknown };
+  let body: {
+    key?: string;
+    items?: unknown;
+    scale?: unknown;
+    build?: unknown;
+    title?: unknown;
+    message?: unknown;
+    button?: unknown;
+    url?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -62,7 +73,15 @@ export async function PUT(req: NextRequest) {
   if (!KEYS.has(key)) {
     return NextResponse.json({ error: "Unknown key" }, { status: 400 });
   }
-  const payload = key === "feed-menu" ? { items: body.items } : { scale: body.scale };
+  // Cada ajuste manda lo suyo: el backend valida cada forma por separado.
+  const payload =
+    key === "feed-menu"
+      ? { items: body.items }
+      : key === "splash-scale"
+        ? { scale: body.scale }
+        : key === "min-build"
+          ? { build: body.build }
+          : { title: body.title, message: body.message, button: body.button, url: body.url };
   const res = await fetch(backendUrl(`/admin/app-settings/${key}`), {
     method: "PUT",
     headers: { "X-Admin-Token": ADMIN_API_SECRET, "Content-Type": "application/json" },

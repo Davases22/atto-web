@@ -27,6 +27,10 @@ type SettingsPayload = {
   menuIcons: string[];
   splashScaleMin: number;
   splashScaleMax: number;
+  minBuild: number;
+  updateCopy: { title?: string; message?: string; button?: string; url?: string } | null;
+  highestSeenBuild: number | null;
+  minBuildMaxAhead: number;
 };
 
 /** What the app draws when nothing is set: same order, labels and icons as the code. */
@@ -74,7 +78,7 @@ function normalize(stored: MenuItem[] | null): MenuItem[] {
 
 export default function AppMenuPage() {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<"menu" | "splash" | null>(null);
+  const [saving, setSaving] = useState<"menu" | "splash" | "update" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [icons, setIcons] = useState<string[]>(DEFAULT_MENU.map((d) => d.icon));
@@ -82,6 +86,16 @@ export default function AppMenuPage() {
   const [splashScale, setSplashScale] = useState<number>(DEFAULT_SPLASH_SCALE);
   const [splashSet, setSplashSet] = useState(false);
   const [scaleRange, setScaleRange] = useState<[number, number]>([0.15, 0.8]);
+  // Actualización obligatoria. `highestSeen` es el build más alto que el
+  // backend ha visto jamás pedir el logo, y es la red que evita fijar un
+  // número que no existe y dejar a todo el mundo fuera sin vuelta atrás.
+  const [minBuild, setMinBuild] = useState<string>("");
+  const [highestSeen, setHighestSeen] = useState<number | null>(null);
+  const [maxAhead, setMaxAhead] = useState<number>(5);
+  const [copyTitle, setCopyTitle] = useState("");
+  const [copyMessage, setCopyMessage] = useState("");
+  const [copyButton, setCopyButton] = useState("");
+  const [copyUrl, setCopyUrl] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,6 +109,13 @@ export default function AppMenuPage() {
       setScaleRange([json.data.splashScaleMin ?? 0.15, json.data.splashScaleMax ?? 0.8]);
       setSplashSet(json.data.splashScale != null);
       setSplashScale(json.data.splashScale ?? DEFAULT_SPLASH_SCALE);
+      setMinBuild(json.data.minBuild ? String(json.data.minBuild) : "");
+      setHighestSeen(json.data.highestSeenBuild ?? null);
+      setMaxAhead(json.data.minBuildMaxAhead ?? 5);
+      setCopyTitle(json.data.updateCopy?.title ?? "");
+      setCopyMessage(json.data.updateCopy?.message ?? "");
+      setCopyButton(json.data.updateCopy?.button ?? "");
+      setCopyUrl(json.data.updateCopy?.url ?? "");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load settings");
     } finally {
@@ -119,6 +140,61 @@ export default function AppMenuPage() {
 
   const update = (index: number, patch: Partial<MenuItem>) =>
     setItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
+
+  const saveUpdateGate = async () => {
+    setSaving("update");
+    setError(null);
+    setNotice(null);
+    try {
+      const build = Number(minBuild) || 0;
+      const a = await fetch("/api/app-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "min-build", build }),
+      });
+      const ja = await a.json();
+      if (!a.ok) throw new Error(ja?.error || "Could not save the minimum build");
+      const b = await fetch("/api/app-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: "update-copy",
+          title: copyTitle,
+          message: copyMessage,
+          button: copyButton,
+          url: copyUrl,
+        }),
+      });
+      const jb = await b.json();
+      if (!b.ok) throw new Error(jb?.error || "Could not save the wording");
+      setNotice(
+        build > 0
+          ? `Builds below ${build} now have to update before they can be used.`
+          : "Nobody is blocked: every build can be used.",
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const liftUpdateGate = async () => {
+    setMinBuild("");
+    setSaving("update");
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/app-settings?key=min-build", { method: "DELETE" });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.error || "Could not lift the block");
+      setNotice("Block lifted: every build can be used again.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not lift the block");
+    } finally {
+      setSaving(null);
+    }
+  };
 
   const saveMenu = async () => {
     setSaving("menu");
@@ -346,6 +422,108 @@ export default function AppMenuPage() {
               className="w-full"
             />
             <div className="text-sm text-neutral-300">{Math.round(splashScale * 100)}% of the screen width</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Actualización obligatoria ─────────────────────────────────── */}
+      <section className="space-y-4 rounded-2xl border border-neutral-800 bg-neutral-950 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-neutral-100">Force an update</h2>
+            <p className="mt-1 max-w-2xl text-sm text-neutral-400">
+              Builds below this number stop working: the app shows a screen that cannot be
+              dismissed until the person updates. Leave it empty, or press Lift, and nobody is
+              blocked.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={liftUpdateGate} disabled={saving !== null || loading}>
+              <RotateCcw className="mr-2 h-4 w-4" /> Lift
+            </Button>
+            <Button onClick={saveUpdateGate} disabled={saving !== null || loading}>
+              {saving === "update" ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Save
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm text-neutral-300">Minimum build</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={minBuild}
+              onChange={(e) => setMinBuild(e.target.value)}
+              placeholder="empty = nobody blocked"
+              className="w-full rounded-lg border border-neutral-700 bg-black px-3 py-2 text-neutral-100"
+            />
+            {/* La única forma de romper esto de verdad es escribir un build que
+                todavía no existe: nadie podría abrir la app ni volver atrás
+                desde ella. El backend lo rechaza y aquí se avisa antes. */}
+            <p className="text-xs text-neutral-500">
+              {highestSeen
+                ? `The highest build ever seen is ${highestSeen}. Anything above ${
+                    highestSeen + maxAhead
+                  } is refused: it does not exist yet, and forcing it would lock everyone out.`
+                : "No build has been seen yet, so no upper limit can be checked."}
+            </p>
+            {Number(minBuild) > 0 && highestSeen && Number(minBuild) > highestSeen ? (
+              <p className="text-xs text-amber-400">
+                {Number(minBuild)} is higher than any build seen. Everyone running {highestSeen} or
+                lower will be blocked, including you.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-neutral-300">Where the button goes</label>
+            <input
+              value={copyUrl}
+              onChange={(e) => setCopyUrl(e.target.value)}
+              placeholder="itms-beta://  (TestFlight, the default)"
+              className="w-full rounded-lg border border-neutral-700 bg-black px-3 py-2 text-neutral-100"
+            />
+            <p className="text-xs text-neutral-500">
+              Empty opens TestFlight. Change it to the App Store link the day the app is published,
+              no new build needed.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-neutral-300">Title</label>
+            <input
+              value={copyTitle}
+              onChange={(e) => setCopyTitle(e.target.value)}
+              placeholder="Time to update"
+              className="w-full rounded-lg border border-neutral-700 bg-black px-3 py-2 text-neutral-100"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-neutral-300">Button</label>
+            <input
+              value={copyButton}
+              onChange={(e) => setCopyButton(e.target.value)}
+              placeholder="Update"
+              className="w-full rounded-lg border border-neutral-700 bg-black px-3 py-2 text-neutral-100"
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm text-neutral-300">Message</label>
+            <textarea
+              value={copyMessage}
+              onChange={(e) => setCopyMessage(e.target.value)}
+              rows={2}
+              placeholder="This version is no longer supported. Get the latest one to keep using ATTO."
+              className="w-full rounded-lg border border-neutral-700 bg-black px-3 py-2 text-neutral-100"
+            />
           </div>
         </div>
       </section>
