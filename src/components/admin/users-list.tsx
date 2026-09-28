@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, Loader2, RefreshCw, Search, Users } from "lucide-react";
+import { AlertCircle, Download, Loader2, RefreshCw, Search, Users } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -119,6 +120,38 @@ export function UsersList() {
     load();
   }, [load]);
 
+  // La descarga lleva el filtro de la pantalla, pero se trae TODAS las filas
+  // que lo cumplen y no solo la página: lo que se ve es lo que se baja.
+  const [exportando, setExportando] = useState(false);
+  const descargar = async () => {
+    setExportando(true);
+    try {
+      const params = new URLSearchParams();
+      if (buscado) params.set("search", buscado);
+      if (role) params.set("role", role);
+      const res = await fetch(`/api/admin/users/export?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error(await readError(res, `Export failed (${res.status})`));
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `atto-users-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("CSV downloaded");
+    } catch (err) {
+      toast.error("Couldn't export CSV", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setExportando(false);
+    }
+  };
+
   const data = state.data;
   const loading = state.status === "loading";
   const users = data?.users ?? [];
@@ -140,20 +173,36 @@ export function UsersList() {
         title="Users"
         description="Everyone registered in the app, newest first."
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={load}
-            disabled={loading}
-            aria-label="Refresh"
-          >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4" />
-            )}
-            Refresh
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={descargar}
+              disabled={exportando}
+              title="Download CSV"
+            >
+              {exportando ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
+              Download
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={load}
+              disabled={loading}
+              aria-label="Refresh"
+            >
+              {loading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
+              Refresh
+            </Button>
+          </>
         }
       />
 
@@ -226,7 +275,8 @@ export function UsersList() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
-                <TableHead>Contact</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead className="text-right">Followers</TableHead>
                 <TableHead className="text-right">Posts</TableHead>
@@ -237,7 +287,7 @@ export function UsersList() {
               {loading && users.length === 0
                 ? Array.from({ length: 8 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={6}>
+                      <TableCell colSpan={7}>
                         <Skeleton className="h-8 w-full" />
                       </TableCell>
                     </TableRow>
@@ -245,7 +295,7 @@ export function UsersList() {
                 : null}
               {!loading && users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-neutral-500">
+                  <TableCell colSpan={7} className="py-10 text-center text-neutral-500">
                     {buscado || role
                       ? "Nobody matches that."
                       : "No registered users yet."}
@@ -270,9 +320,11 @@ export function UsersList() {
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-neutral-400">
-                    <p className="truncate text-xs">{u.email || "—"}</p>
-                    <p className="truncate text-xs">{u.phone || "—"}</p>
+                  <TableCell className="max-w-[18rem] truncate text-xs text-neutral-400">
+                    {u.email || "—"}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-xs tabular-nums text-neutral-400">
+                    {u.phone || "—"}
                   </TableCell>
                   <TableCell>
                     <span className="capitalize text-neutral-300">{u.role}</span>
