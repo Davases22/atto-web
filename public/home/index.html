@@ -105,7 +105,9 @@ h2.display{font-size:clamp(34px,5.6vw,64px)}
 .heroBMark .bar{height:clamp(26px,4.8vw,36px)}
 .heroB .lede{margin-inline:auto;margin-top:clamp(20px,2.6vw,28px)}
 
-/* a quiet cue that there is more, sitting on the bottom edge of the first screen */
+/* a quiet cue that there is more, sitting on the bottom edge of the first
+   screen and of the last page before the footer */
+#beta{position:relative}
 .cue{position:absolute;left:50%;bottom:clamp(18px,3.4vh,34px);translate:-50% 0;
   width:22px;height:22px;opacity:.42;animation:nudge 2.6s ease-in-out infinite}
 .cue svg{width:100%;height:100%;stroke:#CFCDD4;stroke-width:1.6;fill:none}
@@ -178,8 +180,11 @@ h2.display{font-size:clamp(34px,5.6vw,64px)}
 .form.gone{display:none}
 
 /* ---------------------------------------------------------------- footer */
+/* Sin línea encima. La regla que había partía la última pantalla en dos y
+   hacía que el cierre se leyera como media página colgando de la anterior
+   (Anthony, Sep 28: "get rid of that line across the bottom"). */
 footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5vw,64px);
-  text-align:center;border-top:1px solid rgba(255,255,255,.06)}
+  text-align:center}
 /* The renders the previous site used, exactly as it used them: each one is
    already a 3D disc on transparent ground, so it needs no ring and no plate
    behind it. The ring the footer had drew a second circle around a circle,
@@ -299,7 +304,13 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
     scroll-snap-align:center}
   .heroB{padding-block:clamp(34px,7vh,64px)}
   #hear,.season,#beta,.statement{padding-block:clamp(40px,8vh,72px)}
-  footer{scroll-snap-align:end}
+  /* The footer is a page of its own, the same height as the rest, with its
+     three icons in the middle. As a short strip it read as half a page
+     hanging off the last one (Anthony, Sep 28: "this half a page look"). */
+  footer{min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+    scroll-snap-align:center}
+  /* The last page keeps the arrow clear of the sign up button. */
+  #beta{padding-bottom:clamp(96px,14vh,130px)}
 }
 
 </style>
@@ -418,10 +429,15 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
     </div>
     <p class="fine rise pending" id="fine">Don&rsquo;t worry, we don&rsquo;t like email either. We only write when there is something worth hearing.</p>
   </div>
+  <!-- The same cue the opening has. Anthony, Sep 28: the last page should
+       read as one more full page with the arrow, and one more scroll lands
+       on the bottom of the site. -->
+  <div class="cue" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
 </section>
 
 <footer>
-  <div class="legal tagline">Made by the people it&rsquo;s for.</div>
   <div class="socials">
     <a href="https://www.instagram.com/attosound_" target="_blank" rel="noopener" aria-label="Instagram"><img src="/home/assets/ig-3d.png" width="256" height="256" alt="" draggable="false"></a>
     <a href="https://www.tiktok.com/@attosound" target="_blank" rel="noopener" aria-label="TikTok"><img src="/home/assets/tt-3d.png" width="256" height="256" alt="" draggable="false"></a>
