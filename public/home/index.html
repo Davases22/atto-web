@@ -664,10 +664,27 @@ put('mark','mark'); put('word','word');
       })
       .catch(function(){});
   }
-  /* the wheels never spin forever: the shipped figure lands them if the
-     network is slow or down */
-  load().then(function(){ aim(v||'0160'); });
-  setTimeout(function(){ if(v===null) aim('0160'); },2500);
+  /* An odometer: the wheels spin every time the counter comes into view and
+     brake onto the real number (David, Oct 3 2026: on load they had already
+     stopped before anyone scrolled to them). */
+  function spin(){
+    if(REDUCED) return;
+    for(var i=0;i<4;i++){ wheels[i].target=null; wheels[i].digit=null; }
+    setTimeout(function(){ aim(v||FALLBACK); },1100);
+  }
+  var FALLBACK='0160';
+  /* at rest on the shipped figure until the counter is seen */
+  for(var k=0;k<4;k++){ wheels[k].pos=+FALLBACK[k]; wheels[k].target=wheels[k].pos; wheels[k].digit=+FALLBACK[k]; }
+  load().then(function(){ if(REDUCED&&v) aim(v); });
+  if('IntersectionObserver' in window){
+    var seen=false;
+    new IntersectionObserver(function(en){
+      en.forEach(function(x){
+        if(x.isIntersecting && !seen){ seen=true; spin(); }
+        else if(!x.isIntersecting) seen=false;
+      });
+    },{threshold:.6}).observe(el);
+  } else { spin(); }
   setInterval(function(){ load().then(function(){ if(v) aim(v); }); },10000);
 
   /* after somebody joins, count them in */
