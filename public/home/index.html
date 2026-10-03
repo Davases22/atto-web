@@ -131,10 +131,21 @@ h2.display{font-size:clamp(34px,5.6vw,64px)}
 /* counter, milled into the ground */
 .count{margin-top:clamp(34px,4vw,48px);display:flex;flex-direction:column;
   align-items:center;gap:12px}
-.odo{display:flex;gap:1px}
-.odo i{font-family:var(--mono);font-style:normal;font-weight:500;
-  font-size:clamp(24px,2.8vw,30px);color:var(--mute);
-  font-variant-numeric:tabular-nums;letter-spacing:.04em}
+/* the rotary counter: four wheels that spin free, then each one brakes onto
+   its digit, the way the first version of the site did (client, Oct 3 2026:
+   "the 162 is supposed to look like the rotary dial ... spin and then stop") */
+.odo{display:flex;gap:4px}
+.odo .well{position:relative;width:clamp(28px,3vw,34px);height:clamp(42px,4.4vw,50px);
+  overflow:hidden;border-radius:3px;background:#141316;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.6),inset 0 -1px 2px rgba(255,255,255,.05)}
+.odo .strip{position:absolute;left:0;right:0;top:0;will-change:transform}
+.odo .strip b{display:flex;align-items:center;justify-content:center;
+  height:clamp(42px,4.4vw,50px);font-family:var(--mono);font-weight:700;
+  font-size:clamp(20px,2.2vw,24px);color:#EDEEEF;font-variant-numeric:tabular-nums}
+.odo .well:before,.odo .well:after{content:"";position:absolute;left:0;right:0;height:26%;
+  z-index:1;pointer-events:none}
+.odo .well:before{top:0;background:linear-gradient(#141316cc,transparent)}
+.odo .well:after{bottom:0;background:linear-gradient(transparent,#141316cc)}
 
 /* ------------------------------------------------------------ the record */
 .player{margin-top:clamp(36px,5vw,54px)}
@@ -600,39 +611,68 @@ put('mark','mark'); put('word','word');
    air, and if it fails the page keeps the figure it shipped with. */
 (function(){
   var el=document.getElementById('odo'); if(!el) return;
-  var v='0160', i, cells;
-  for(i=0;i<4;i++){ var s=document.createElement('i'); s.textContent='0'; el.appendChild(s); }
-  cells=el.children;
-
-  function roll(){
-    for(var i=0;i<4;i++)(function(i){
-      var target=v[i], step=0, n=6+i*4;
-      var id=setInterval(function(){
-        if(step>=n){ cells[i].textContent=target; clearInterval(id); return; }
-        cells[i].textContent=Math.floor(Math.random()*10); step++;
-      },36);
-    })(i);
-    el.setAttribute('aria-label', String(parseInt(v,10))+' people signed up');
+  /* each wheel: a strip 0..9 plus a second 0 for a seamless loop. Position is
+     counted in cells; it free rolls at its own speed until the real number
+     is known, then eases forward (always forward, one extra turn) onto it. */
+  var SPEEDS=[6,7.3,9.3,6.7], EASE=5, v=null, wheels=[], i, n;
+  for(i=0;i<4;i++){
+    var well=document.createElement('span'); well.className='well';
+    var strip=document.createElement('span'); strip.className='strip';
+    for(n=0;n<11;n++){ var b=document.createElement('b'); b.textContent=n%10; strip.appendChild(b); }
+    well.appendChild(strip); el.appendChild(well);
+    wheels.push({strip:strip,pos:0,target:null,digit:null,speed:SPEEDS[i]});
+  }
+  function cell(){ return wheels[0].strip.firstChild.getBoundingClientRect().height||48; }
+  function paint(w){
+    var m=((w.pos%10)+10)%10; w.strip.style.transform='translateY('+(-m*cell())+'px)';
+  }
+  function aim(str){
+    for(var i=0;i<4;i++){
+      var w=wheels[i], d=+str[i];
+      if(w.digit===d && w.target!==null) continue;
+      w.digit=d;
+      var cur=((w.pos%10)+10)%10, fwd=d-cur; if(fwd<=0) fwd+=10;
+      w.target=w.pos+fwd+10;
+    }
+    el.setAttribute('aria-label', String(parseInt(str,10))+' people signed up');
+  }
+  if(REDUCED){
+    /* no motion: show the digits where they land */
+    var show=function(str){ for(var i=0;i<4;i++){ wheels[i].pos=+str[i]; paint(wheels[i]); } };
+    show('0160');
+    aim=function(str){ show(str); el.setAttribute('aria-label', String(parseInt(str,10))+' people signed up'); };
+  } else {
+    var last=null;
+    (function tick(t){
+      /* time based, never frame based: a slow or throttled tab still lands on time */
+      var dt=last===null?0:Math.min(1,(t-last)/1000); last=t;
+      for(var i=0;i<4;i++){
+        var w=wheels[i];
+        if(w.target===null) w.pos+=w.speed*dt;
+        else { var r=w.target-w.pos; w.pos=Math.abs(r)<.001?w.target:w.pos+r*Math.min(1,EASE*dt); }
+        paint(w);
+      }
+      requestAnimationFrame(tick);
+    })(performance.now());
   }
 
-  function load(then){
-    fetch('/api/waitlist/count',{cache:'no-store'})
+  function load(){
+    return fetch('/api/waitlist/count',{cache:'no-store'})
       .then(function(r){ return r.json(); })
       .then(function(d){
-        var n=d&&typeof d.count==='number'?d.count:0;
-        if(n>0) v=String(n).length>4?String(n):('0000'+n).slice(-4);
+        var c=d&&typeof d.count==='number'?d.count:null;
+        if(c!==null&&c>=0) v=String(c).length>4?String(c).slice(-4):('0000'+c).slice(-4);
       })
-      .catch(function(){})
-      .then(function(){ if(then) then(); });
+      .catch(function(){});
   }
-
-  /* the roll fires on its own clock so a slow network never holds the page */
-  var rolled=false;
-  function once(){ if(rolled) return; rolled=true; roll(); }
-  load(once); setTimeout(once,1400);
+  /* the wheels never spin forever: the shipped figure lands them if the
+     network is slow or down */
+  load().then(function(){ aim(v||'0160'); });
+  setTimeout(function(){ if(v===null) aim('0160'); },2500);
+  setInterval(function(){ load().then(function(){ if(v) aim(v); }); },10000);
 
   /* after somebody joins, count them in */
-  window.attoCount=function(){ load(function(){ roll(); }); };
+  window.attoCount=function(){ load().then(function(){ if(v) aim(v); }); };
 })();
 
 /* ------------------------------------------------------------- reveals */
