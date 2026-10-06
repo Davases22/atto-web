@@ -774,7 +774,13 @@ put('mark','mark'); put('word','word');
     if(opener&&opener.focus) opener.focus();
   }
 
+  /* Only the Sign Up buttons on the page open the form. The two buttons
+     inside it (Submit and the closing one) wear the same class for the look,
+     and open() cancels the click's default action: bound to Submit it
+     cancelled the submission itself, so from Sep 21 to Oct 6 2026 pressing
+     Submit did nothing and nobody could join. */
   [].forEach.call(document.querySelectorAll('.signup'),function(el){
+    if(mdl.contains(el)) return;
     el.addEventListener('click',open);
   });
   if(location.hash==='#signup') setTimeout(function(){ open(); },120);
