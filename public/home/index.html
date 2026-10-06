@@ -278,11 +278,14 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
 .signup[disabled]{opacity:.42;cursor:not-allowed}
 .msg{min-height:20px;margin:12px 0 0;font-size:13.5px;text-align:center;color:#9A97A1}
 .msg.bad{color:#D89B9B}
-.done{text-align:center;padding:14px 0 6px}
-.done .tick{width:54px;height:54px;margin:0 auto 16px;border-radius:999px;background:#EDEEEF;
+/* Not .done: an older rule further up (.done{display:none}, from the inline
+   form this sheet replaced) kept this pane hidden after a successful sign up,
+   so the sheet was left empty with only its X (David, Oct 6 2026). */
+.joined{text-align:center;padding:14px 0 6px}
+.joined .tick{width:54px;height:54px;margin:0 auto 16px;border-radius:999px;background:#EDEEEF;
   color:#141316;display:flex;align-items:center;justify-content:center;font-size:26px}
-.done h3{font-family:var(--serif);font-weight:400;font-size:clamp(26px,4vw,32px);margin:0 0 8px}
-.done p{color:var(--mute);font-size:14.5px;margin:0 0 20px}
+.joined h3{font-family:var(--serif);font-weight:400;font-size:clamp(26px,4vw,32px);margin:0 0 8px}
+.joined p{color:var(--mute);font-size:14.5px;margin:0 0 20px}
 @media (max-width:420px){.two{grid-template-columns:1fr}.tel{grid-template-columns:104px 1fr}}
 
 
@@ -504,7 +507,7 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
       </form>
     </div>
 
-    <div id="mdlDone" class="done" hidden>
+    <div id="mdlDone" class="joined" hidden>
       <div class="tick" aria-hidden="true">&#10003;</div>
       <h3>You are on the list.</h3>
       <p>We will be in touch soon.</p>
