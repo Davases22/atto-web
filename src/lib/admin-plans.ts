@@ -102,6 +102,10 @@ export interface MetricsResponse {
     required: boolean;
     paidFeatures: string[];
   };
+  /** Whether revenue, MRR and ARR are real money. Absent on an older backend. */
+  billing?: {
+    stripeMode: "live" | "test" | "unconfigured";
+  };
   generatedAt: string;
 }
 

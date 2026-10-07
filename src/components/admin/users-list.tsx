@@ -34,6 +34,10 @@ export interface AdminUser {
   representativeId?: number | null;
   followersCount: number;
   postsCount: number;
+  /** True when the two counts above came live from the service that owns
+   *  them; false when it could not be reached and they are a stored fallback
+   *  (which nothing keeps up to date, so it is shown as unknown, never as 0). */
+  statsLive?: boolean;
   createdAt: string;
 }
 
@@ -159,6 +163,14 @@ export function UsersList() {
   const desde = total === 0 ? 0 : offset + 1;
   const hasta = Math.min(offset + users.length, total);
 
+  // Everyone registered, whatever filter is on. This tile used to show the size
+  // of the current filter under the word "Total" (11 with Creators selected,
+  // next to Creators 11, Representatives 14, Listeners 28), which read as if
+  // the app had 11 users. The size of the filter is in the footer of the table.
+  const todos = useMemo(
+    () => Object.values(data?.byRole ?? {}).reduce((sum, n) => sum + (n || 0), 0),
+    [data?.byRole]
+  );
   const resumen = useMemo(() => {
     const porRol = data?.byRole ?? {};
     return ROLES.filter((r) => r.value).map((r) => ({
@@ -213,7 +225,7 @@ export function UsersList() {
             <div className="min-w-0">
               <p className="text-xs text-neutral-500">Total</p>
               <p className="text-lg font-semibold text-white tabular-nums">
-                {loading && !data ? <Skeleton className="h-6 w-14" /> : formatNumber(total)}
+                {loading && !data ? <Skeleton className="h-6 w-14" /> : formatNumber(todos)}
               </p>
             </div>
           </CardContent>
@@ -335,10 +347,10 @@ export function UsersList() {
                     ) : null}
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-neutral-300">
-                    {formatNumber(u.followersCount)}
+                    {u.statsLive === false ? "—" : formatNumber(u.followersCount)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-neutral-300">
-                    {formatNumber(u.postsCount)}
+                    {u.statsLive === false ? "—" : formatNumber(u.postsCount)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-xs text-neutral-400">
                     {formatDateTime(u.createdAt)}

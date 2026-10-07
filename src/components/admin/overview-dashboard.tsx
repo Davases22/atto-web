@@ -141,8 +141,31 @@ function Metrics({ data }: { data: MetricsResponse }) {
     [data.revenue.byDay]
   );
 
+  // Only a live Stripe key means these amounts were collected. With a test key
+  // they are test card payments and plans picked for free during the testing
+  // period, and showing them as income would mislead whoever reads the panel.
+  const stripeMode = data.billing?.stripeMode;
+  const moneyIsReal = stripeMode === "live";
+  const moneyHint = moneyIsReal ? undefined : "not real money";
+
   return (
     <div className="space-y-6">
+      {stripeMode && !moneyIsReal ? (
+        <div
+          role="note"
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+        >
+          <p className="font-medium">
+            {stripeMode === "test"
+              ? "Stripe is in test mode: no real money has been collected."
+              : "Stripe is not configured: no money can be collected."}
+          </p>
+          <p className="mt-1 text-amber-200/80">
+            Revenue, MRR and ARR below come from test card payments and from plans picked for
+            free during the testing period. Users, calls and numbers are real.
+          </p>
+        </div>
+      ) : null}
       <section
         aria-label="Key numbers"
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
@@ -166,8 +189,8 @@ function Metrics({ data }: { data: MetricsResponse }) {
           label="Active subscriptions"
           value={formatNumber(activeSubs)}
           lines={[
-            `MRR ${formatMoney(data.subscriptions.mrrCents)}`,
-            `ARR ${formatMoney(data.subscriptions.arrCents)}`,
+            `MRR ${formatMoney(data.subscriptions.mrrCents)}${moneyIsReal ? "" : " (at list price, not collected)"}`,
+            `ARR ${formatMoney(data.subscriptions.arrCents)}${moneyIsReal ? "" : " (at list price, not collected)"}`,
             ...data.subscriptions.activeByPlan.map(
               (p) => `${formatNumber(p.count)} on ${p.name || p.plan}`
             ),
@@ -177,6 +200,7 @@ function Metrics({ data }: { data: MetricsResponse }) {
           label="Revenue"
           value={formatMoney(data.revenue.last30dCents)}
           hint="last 30 days"
+          lines={moneyHint ? [`Test payments, ${moneyHint}`] : undefined}
         />
         <StatTile
           label="Calls"
@@ -232,7 +256,12 @@ function Metrics({ data }: { data: MetricsResponse }) {
         <ChartCard title="Calls per day" description="Completed calls by day">
           <CountChart data={calls} label="Calls" />
         </ChartCard>
-        <ChartCard title="Revenue per day" description="Payments received by day">
+        <ChartCard
+          title="Revenue per day"
+          description={
+            moneyIsReal ? "Payments received by day" : "Test payments by day, not real money"
+          }
+        >
           <RevenueChart data={revenue} />
         </ChartCard>
       </section>
