@@ -307,22 +307,35 @@ footer{padding-inline:var(--gut);padding-block:clamp(56px,7vw,90px) clamp(44px,5
 /* ------------------------------------------------------ read it as pages
    "One thought at a time. Each page takes almost a screen of scrolling to
    get to." So on a phone every idea owns the whole screen and centres
-   itself, and the scroll settles on one page rather than leaving two half
-   ideas on it. Proximity, not mandatory, and no forced stop: a long swipe
-   still runs, it just lands square. The order, the words and the desktop
-   are untouched. */
+   itself, and the scroll always settles on one page.
+
+   The client, Oct 7 2026, with a video: "Can we make it so each time you
+   swipe everything is already at the middle of the screen?" The snap was
+   `proximity`, which only pulls a page square when the finger happens to
+   let go near it: in his video a short swipe left "The studio is the phone."
+   at the bottom of the screen with the end of the record above it, and the
+   footer icons near the bottom edge. Now it is `mandatory` and every page is
+   a stop, so one swipe, short or long, lands on the next page, centred.
+
+   Pages are the small viewport tall (svh) and snap by their top. A page that
+   fits centres its own content with flex, so it reads as centred; a page
+   taller than the phone (the record block on a small screen) anchors its top
+   and stays readable top to bottom instead of being clipped at both ends.
+   Snapping by the top also means that when the browser's bar hides and the
+   screen grows the page keeps its place rather than jumping. The order, the
+   words and the desktop are untouched. */
 @media (max-width:560px){
-  html{scroll-snap-type:y proximity}
+  html{scroll-snap-type:y mandatory}
   .hero,.heroB,#hear,.statement,.season,#beta{
     min-height:100svh;display:flex;flex-direction:column;justify-content:center;
-    scroll-snap-align:center}
+    scroll-snap-align:start;scroll-snap-stop:always}
   .heroB{padding-block:clamp(34px,7vh,64px)}
   #hear,.season,#beta,.statement{padding-block:clamp(40px,8vh,72px)}
   /* The footer is a page of its own, the same height as the rest, with its
      three icons in the middle. As a short strip it read as half a page
      hanging off the last one (Anthony, Sep 28: "this half a page look"). */
   footer{min-height:100svh;display:flex;flex-direction:column;justify-content:center;
-    scroll-snap-align:center}
+    scroll-snap-align:start;scroll-snap-stop:always}
   /* The last page keeps the arrow clear of the sign up button. */
   #beta{padding-bottom:clamp(96px,14vh,130px)}
 }
